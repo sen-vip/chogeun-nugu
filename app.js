@@ -22,7 +22,7 @@ const COL = {
   substituteHoliday: 21,
 };
 
-const MEAL_LIMIT = 9000;
+const DEFAULT_MEAL_LIMIT = 9000;
 
 const EXCLUDE_KEYWORDS = [
   'g마켓', '지마켓', '11번가', '예스이십사', '예스24', 'yes24', 'kcp', 'nice_', 'nice',
@@ -46,6 +46,8 @@ const state = {
   currentMonth: null,
   selectedDate: null,
   currentView: 'calendar',
+  mealLimit: DEFAULT_MEAL_LIMIT,
+  maskNames: false,
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -78,6 +80,9 @@ const showAllCards = $('#showAllCards');
 const tableBody = $('#tableBody');
 const cardTableBody = $('#cardTableBody');
 const toast = $('#toast');
+const mealLimitInput = $('#mealLimitInput');
+const maskNames = $('#maskNames');
+const guideBox = $('#guideBox');
 
 function showToast(message) {
   toast.textContent = message;
@@ -153,6 +158,41 @@ function moneyFormat(num) {
   return new Intl.NumberFormat('ko-KR').format(Number(num) || 0);
 }
 
+function getMealLimit() {
+  return Number(state.mealLimit) > 0 ? Number(state.mealLimit) : DEFAULT_MEAL_LIMIT;
+}
+
+function displayName(name) {
+  return state.maskNames ? maskName(name) : String(name || '');
+}
+
+function maskName(name) {
+  const clean = String(name || '').replace(/\s+/g, '');
+  if (!clean) return '';
+  if (clean.length === 1) return '*';
+  if (clean.length === 2) return `${clean[0]}*`;
+  return `${clean[0]}*${clean[clean.length - 1]}`;
+}
+
+function refreshCardCalculations() {
+  const limit = getMealLimit();
+  state.cardRecords.forEach(card => {
+    const category = classifyCard(card.merchant, card.amount, card.salesType, card.note);
+    Object.assign(card, category);
+    card.requiredPeople = card.amount > 0 ? Math.ceil(card.amount / limit) : 0;
+  });
+}
+
+function syncMealLimitFromInput({ format = false } = {}) {
+  const digits = String(mealLimitInput?.value || '').replace(/[^\d]/g, '');
+  const nextValue = digits ? Number(digits) : DEFAULT_MEAL_LIMIT;
+  state.mealLimit = nextValue > 0 ? nextValue : DEFAULT_MEAL_LIMIT;
+  if (format && mealLimitInput) mealLimitInput.value = moneyFormat(state.mealLimit);
+  refreshCardCalculations();
+  if (state.records.length || state.cardRecords.length) renderAll();
+}
+
+
 function parseMoney(value) {
   const text = String(value || '').replaceAll(',', '').trim();
   const match = text.match(/-?\d+/);
@@ -211,7 +251,7 @@ function classifyCard(merchant, amount, salesType = '', note = '') {
   const isCancel = amount < 0 || text.includes('취소');
   const isExcluded = EXCLUDE_KEYWORDS.some(keyword => text.includes(keyword.toLowerCase()));
   const keywordHit = FOOD_KEYWORDS.some(keyword => text.includes(keyword.toLowerCase()));
-  const amountPattern = amount > 0 && (amount <= MEAL_LIMIT || amount % MEAL_LIMIT === 0 || (amount <= 45000 && amount % 1000 === 0));
+  const amountPattern = amount > 0 && (amount <= getMealLimit() || amount % getMealLimit() === 0 || (amount <= 45000 && amount % 1000 === 0));
   const isMealCandidate = !isCancel && !isExcluded && amount > 0 && (keywordHit || amountPattern);
 
   let label = '일반';
@@ -260,7 +300,7 @@ function parseCardWorkbook(workbook) {
       const salesType = String(row[salesTypeIdx] || '').trim();
       const note = String(row[noteIdx] || '').trim();
       const category = classifyCard(merchant, amount, salesType, note);
-      const requiredPeople = amount > 0 ? Math.ceil(amount / MEAL_LIMIT) : 0;
+      const requiredPeople = amount > 0 ? Math.ceil(amount / getMealLimit()) : 0;
 
       return {
         id: `${dates.approvalDate}-${merchant}-${index}`,
@@ -311,7 +351,7 @@ function renderSummary() {
   const people = new Set(worked.map(r => r.name));
   const days = new Set(worked.map(r => r.date));
   const totalMinutes = worked.reduce((sum, r) => sum + r.actualMinutes, 0);
-  const possibleMeal = worked.length * MEAL_LIMIT;
+  const possibleMeal = worked.length * getMealLimit();
 
   const items = [
     ['전체 건수', `${state.records.length}건`],
@@ -350,7 +390,7 @@ function countRiskyMealDates() {
   return Object.keys(byCard).filter(date => {
     const workedCount = state.records.filter(r => r.date === date && r.actualMinutes > 0).length;
     const total = byCard[date].reduce((sum, c) => sum + c.amount, 0);
-    return total > 0 && (workedCount === 0 || Math.ceil(total / MEAL_LIMIT) > workedCount);
+    return total > 0 && (workedCount === 0 || Math.ceil(total / getMealLimit()) > workedCount);
   }).length;
 }
 
@@ -370,11 +410,24 @@ function recordsByDate(records) {
 
 function getMealStatus(workedCount, mealTotal) {
   if (!mealTotal) return { className: '', label: '' };
-  const needed = Math.ceil(mealTotal / MEAL_LIMIT);
-  if (workedCount === 0) return { className: 'danger', label: '초근없음' };
-  if (needed > workedCount) return { className: 'danger', label: `${needed}명 필요` };
-  if (mealTotal > MEAL_LIMIT) return { className: 'warn', label: `${needed}명분` };
-  return { className: 'ok', label: '금액가능' };
+  const limit = getMealLimit();
+  const possible = workedCount * limit;
+  if (workedCount === 0) return { className: 'danger', label: '근거없음' };
+  if (mealTotal > possible) return { className: 'warn', label: '초과의심' };
+  return { className: 'ok', label: '기준이내' };
+}
+
+function getMealJudgementText(status) {
+  if (status.label === '기준이내') {
+    return '금액은 기준 이내입니다. 실제 대상자와 사용 목적은 원인행위/증빙자료로 확인하세요.';
+  }
+  if (status.label === '초과의심') {
+    return '식사후보 금액이 초근자 기준 가능액을 초과합니다. 원인행위/실제 사용 목적을 확인하세요.';
+  }
+  if (status.label === '근거없음') {
+    return '식사후보 카드 사용은 있으나, 해당 날짜의 실제 초과근무자가 없습니다. 원인행위/실제 사용 목적을 확인하세요.';
+  }
+  return '';
 }
 
 function renderCalendar() {
@@ -407,7 +460,7 @@ function renderCalendar() {
 
     const preview = dayRecords.slice(0, 3).map(r => `
       <div class="person-chip ${r.actualMinutes <= 0 ? 'zero' : ''}">
-        <strong>${escapeHtml(r.name)}</strong>
+        <strong>${escapeHtml(displayName(r.name))}</strong>
         <span>${escapeHtml(r.actualTotal)}</span>
       </div>
     `).join('');
@@ -459,14 +512,14 @@ function renderDetail() {
     .sort((a, b) => b.actualMinutes - a.actualMinutes || a.name.localeCompare(b.name, 'ko'));
   const worked = dayRecords.filter(r => r.actualMinutes > 0);
   const totalMinutes = worked.reduce((sum, r) => sum + r.actualMinutes, 0);
-  const possibleMeal = worked.length * MEAL_LIMIT;
+  const possibleMeal = worked.length * getMealLimit();
   const dayCards = state.cardRecords
     .filter(c => c.date === targetDate)
     .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
   const displayCards = showAllCards.checked ? dayCards : dayCards.filter(c => c.isMealCandidate);
   const mealCards = dayCards.filter(c => c.isMealCandidate);
   const mealTotal = mealCards.reduce((sum, c) => sum + c.amount, 0);
-  const neededPeople = mealTotal > 0 ? Math.ceil(mealTotal / MEAL_LIMIT) : 0;
+  const neededPeople = mealTotal > 0 ? Math.ceil(mealTotal / getMealLimit()) : 0;
   const mealStatus = getMealStatus(worked.length, mealTotal);
 
   if (!dayRecords.length && !displayCards.length) {
@@ -485,7 +538,7 @@ function renderDetail() {
   const overtimeRows = dayRecords.length ? dayRecords.map(record => `
     <div class="detail-row ${record.actualMinutes <= 0 ? 'zero' : ''}">
       <div class="detail-row-main">
-        <strong>${escapeHtml(record.name)}</strong>
+        <strong>${escapeHtml(displayName(record.name))}</strong>
         <span>${escapeHtml(record.actualTotal)}</span>
       </div>
       <div class="detail-row-sub">
@@ -523,9 +576,9 @@ function renderDetail() {
       <div class="detail-mini"><span>실제 초근자</span><strong>${worked.length}명</strong></div>
       <div class="detail-mini"><span>인정 가능액</span><strong>${moneyFormat(possibleMeal)}원</strong></div>
       <div class="detail-mini"><span>식사 후보금액</span><strong>${moneyFormat(mealTotal)}원</strong></div>
-      <div class="detail-mini"><span>필요 인원</span><strong>${neededPeople}명</strong></div>
+      <div class="detail-mini"><span>금액 기준인원</span><strong>${neededPeople}명</strong></div>
     </div>
-    ${mealTotal > 0 ? `<div class="meal-judgement ${mealStatus.className}">${escapeHtml(mealStatus.label)} · 최종 확인은 원인행위/실제 사용 목적 기준으로 해주세요.</div>` : ''}
+    ${mealTotal > 0 ? `<div class="meal-judgement ${mealStatus.className}">${escapeHtml(getMealJudgementText(mealStatus))}</div>` : ''}
     <section class="detail-section">
       <h3>초과근무자</h3>
       <div class="detail-list">${overtimeRows}</div>
@@ -542,10 +595,9 @@ function renderDetail() {
 
 function getSingleCardStatus(card, workedCount) {
   if (!card.isMealCandidate) return { className: 'zero', label: card.label };
-  if (workedCount === 0) return { className: 'danger', label: '초근없음' };
-  if (card.requiredPeople > workedCount) return { className: 'danger', label: `${card.requiredPeople}명 필요` };
-  if (card.amount > MEAL_LIMIT) return { className: 'warn', label: `${card.requiredPeople}명분` };
-  return { className: 'ok', label: '1명 이내' };
+  if (workedCount === 0) return { className: 'danger', label: '근거없음' };
+  if (card.amount > workedCount * getMealLimit()) return { className: 'warn', label: '초과의심' };
+  return { className: 'ok', label: '기준이내' };
 }
 
 function renderTable() {
@@ -555,7 +607,7 @@ function renderTable() {
     .map(record => `
       <tr class="${record.actualMinutes <= 0 ? 'zero-row' : ''}">
         <td>${dateLabel(record.date)}</td>
-        <td><strong>${escapeHtml(record.name)}</strong></td>
+        <td><strong>${escapeHtml(displayName(record.name))}</strong></td>
         <td>${escapeHtml(record.position || '-')}</td>
         <td>${escapeHtml(record.actualStart || '-')}</td>
         <td>${escapeHtml(record.actualEnd || '-')}</td>
@@ -612,10 +664,13 @@ function copyDayText(dateKey, records, cards, possibleMeal, mealTotal) {
     `카드 식사 후보 ${mealCards.length}건 / 후보금액 ${moneyFormat(mealTotal)}원`,
     '',
     '[초과근무자]',
-    ...worked.map(r => `- ${r.name}: ${r.actualStart || '-'}~${r.actualEnd || '-'} / ${r.actualTotal}`),
+    ...worked.map(r => `- ${displayName(r.name)}: ${r.actualStart || '-'}~${r.actualEnd || '-'} / ${r.actualTotal}`),
     '',
     '[카드 식사 후보]',
-    ...mealCards.map(c => `- ${c.merchant}: ${moneyFormat(c.amount)}원 / ${c.label} / ${c.requiredPeople}명 필요`),
+    ...mealCards.map(c => {
+      const cardStatus = getSingleCardStatus(c, worked.length);
+      return `- ${c.merchant}: ${moneyFormat(c.amount)}원 / ${c.label} / ${cardStatus.label}`;
+    }),
   ];
   navigator.clipboard.writeText(lines.join('\n')).then(() => showToast('날짜 내용을 복사했어요.'));
 }
@@ -624,7 +679,7 @@ function copyFilteredText() {
   const lines = state.filtered
     .slice()
     .sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name, 'ko'))
-    .map(r => `${dateLabel(r.date)}\t${r.name}\t${r.actualStart || '-'}~${r.actualEnd || '-'}\t${r.actualTotal}\t${r.approvalStatus || '-'}`);
+    .map(r => `${dateLabel(r.date)}\t${displayName(r.name)}\t${r.actualStart || '-'}~${r.actualEnd || '-'}\t${r.actualTotal}\t${r.approvalStatus || '-'}`);
   if (!lines.length) return showToast('복사할 자료가 없어요.');
   navigator.clipboard.writeText(['일자\t성명\t실제시간\t시간합\t승인상태', ...lines].join('\n'))
     .then(() => showToast('표 내용을 복사했어요.'));
@@ -636,7 +691,7 @@ function copyCardText() {
     .sort((a, b) => a.date.localeCompare(b.date))
     .map(c => `${dateLabel(c.date)}\t${c.postingDate || '-'}\t${c.merchant}\t${c.amount}\t${c.label}\t${c.requiredPeople || '-'}\t${c.cardNo || '-'}\t${c.approvalNo || '-'}`);
   if (!lines.length) return showToast('복사할 카드내역이 없어요.');
-  navigator.clipboard.writeText(['승인일자\t접수일자\t가맹점\t금액\t분류\t필요인원\t카드번호\t승인번호', ...lines].join('\n'))
+  navigator.clipboard.writeText(['승인일자\t접수일자\t가맹점\t금액\t분류\t기준인원\t카드번호\t승인번호', ...lines].join('\n'))
     .then(() => showToast('카드표 내용을 복사했어요.'));
 }
 
@@ -795,6 +850,49 @@ function bindDrop(zone, handler) {
   });
 }
 
+
+const GUIDE_CONTENT = {
+  how: `
+    <h2>사용방법</h2>
+    <ol>
+      <li>NEIS 초과근무자료를 업로드합니다.</li>
+      <li>날짜별 초과근무자를 캘린더에서 확인합니다.</li>
+      <li>필요 시 BC카드 이용내역을 추가합니다.</li>
+      <li>식사후보 금액과 초근자 수를 함께 확인합니다.</li>
+    </ol>
+  `,
+  source: `
+    <h2>자료 받는 법</h2>
+    <ul>
+      <li><strong>NEIS 초과근무자료</strong>: 나이스 접속 → 초과근무 확인목록 → 해당 월 조회 → 엑셀 다운로드</li>
+      <li><strong>BC카드 이용내역</strong>: BC카드 이용내역 조회 → 해당 월 전체 이용내역 조회 → 엑셀 다운로드</li>
+    </ul>
+    <div class="guide-note">기관별 메뉴명은 다를 수 있어요. 정확한 경로가 확인되면 도움말 문구만 교체하면 됩니다.</div>
+  `,
+  privacy: `
+    <h2>개인정보 안내</h2>
+    <p>업로드한 파일은 서버로 전송되지 않고, 현재 브라우저 안에서만 분석됩니다.</p>
+    <p>NEIS 초과근무자료와 카드 이용내역은 저장되지 않습니다.</p>
+    <div class="guide-note">이 도구는 자료를 보기 쉽게 정리하는 확인 보조 도구입니다. 최종 인정 여부는 기관 기준과 증빙자료를 함께 확인해 주세요.</div>
+  `,
+};
+
+function toggleGuide(kind) {
+  if (!guideBox) return;
+  const alreadyOpen = !guideBox.classList.contains('hidden') && guideBox.dataset.kind === kind;
+  $$('.guide-btn').forEach(btn => btn.classList.remove('active'));
+  if (alreadyOpen) {
+    guideBox.classList.add('hidden');
+    guideBox.dataset.kind = '';
+    return;
+  }
+  guideBox.innerHTML = GUIDE_CONTENT[kind] || '';
+  guideBox.dataset.kind = kind;
+  guideBox.classList.remove('hidden');
+  const activeBtn = document.querySelector(`.guide-btn[data-guide="${kind}"]`);
+  if (activeBtn) activeBtn.classList.add('active');
+}
+
 fileInput.addEventListener('change', (event) => handleFile(event.target.files[0]));
 cardFileInput.addEventListener('change', (event) => handleCardFile(event.target.files[0]));
 resetBtn.addEventListener('click', resetApp);
@@ -803,6 +901,10 @@ nameSearch.addEventListener('input', applyFilters);
 approvalFilter.addEventListener('change', applyFilters);
 showZero.addEventListener('change', applyFilters);
 showAllCards.addEventListener('change', renderDetail);
+mealLimitInput.addEventListener('input', () => syncMealLimitFromInput());
+mealLimitInput.addEventListener('blur', () => syncMealLimitFromInput({ format: true }));
+maskNames.addEventListener('change', () => { state.maskNames = maskNames.checked; renderAll(); });
+$$('.guide-btn').forEach(btn => btn.addEventListener('click', () => toggleGuide(btn.dataset.guide)));
 $('#copyFilteredBtn').addEventListener('click', copyFilteredText);
 $('#copyCardBtn').addEventListener('click', copyCardText);
 
