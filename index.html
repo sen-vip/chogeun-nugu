@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>초근 누구 v0.2.1</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">학돌랩 · 초과근무 확인 도구</p>
+        <h1>초근 누구</h1>
+        <p class="hero-desc">NEIS 초과근무 확인목록을 캘린더와 표로 정리하고, BC카드 이용내역을 선택으로 불러와 날짜별 매식 후보 금액을 함께 확인합니다.</p>
+      </div>
+      <div class="hero-card">
+        <strong>v0.2.1</strong>
+        <span>카드내역 보조점검</span>
+      </div>
+    </header>
+
+    <section class="upload-stack">
+      <section class="upload-panel" id="dropZone">
+        <div class="upload-copy">
+          <span class="upload-icon">📄</span>
+          <div>
+            <h2>1. NEIS 초과근무 최종자료</h2>
+            <p>엑셀 파일을 이곳에 끌어오거나 선택하세요. 날짜별 초과근무자 캘린더를 먼저 만듭니다.</p>
+          </div>
+        </div>
+        <label class="upload-button">
+          초과근무 파일 선택
+          <input type="file" id="fileInput" accept=".xlsx,.xls" />
+        </label>
+      </section>
+
+      <section class="upload-panel card-upload" id="cardDropZone">
+        <div class="upload-copy">
+          <span class="upload-icon">💳</span>
+          <div>
+            <h2>2. BC카드 이용내역 선택 업로드</h2>
+            <p>BC카드 이용내역 엑셀 또는 엑셀이 들어있는 ZIP을 넣으면 식사 후보 결제와 1인 9,000원 기준을 날짜별로 함께 보여줍니다.</p>
+          </div>
+        </div>
+        <label class="upload-button secondary">
+          카드내역 파일 선택
+          <input type="file" id="cardFileInput" accept=".xlsx,.xls,.zip,.pdf" />
+        </label>
+      </section>
+    </section>
+
+    <section class="status-card hidden" id="statusCard">
+      <div>
+        <strong id="fileName">파일명</strong>
+        <p id="parseNote">자료를 읽었습니다.</p>
+      </div>
+      <button type="button" id="resetBtn">초기화</button>
+    </section>
+
+    <section class="status-card card-status hidden" id="cardStatusCard">
+      <div>
+        <strong id="cardFileName">카드내역 파일명</strong>
+        <p id="cardParseNote">카드 이용내역을 읽었습니다.</p>
+      </div>
+      <button type="button" id="resetCardBtn">카드내역 지우기</button>
+    </section>
+
+    <section class="summary-grid" id="summaryGrid" aria-label="요약"></section>
+
+    <section class="toolbar hidden" id="toolbar">
+      <div class="tool-group month-control">
+        <button type="button" id="prevMonth" aria-label="이전 달">‹</button>
+        <strong id="monthTitle">2026년 6월</strong>
+        <button type="button" id="nextMonth" aria-label="다음 달">›</button>
+      </div>
+      <div class="tool-group filters">
+        <input type="search" id="nameSearch" placeholder="성명 검색" />
+        <select id="approvalFilter">
+          <option value="all">승인상태 전체</option>
+        </select>
+        <label class="switch-label">
+          <input type="checkbox" id="showZero" />
+          실제 00:00 포함
+        </label>
+        <label class="switch-label card-switch">
+          <input type="checkbox" id="showAllCards" />
+          카드 전체 보기
+        </label>
+      </div>
+      <div class="view-toggle" role="tablist" aria-label="보기 전환">
+        <button type="button" class="active" data-view="calendar">캘린더</button>
+        <button type="button" data-view="table">초근표</button>
+        <button type="button" data-view="card">카드표</button>
+      </div>
+    </section>
+
+    <main class="content-grid hidden" id="contentGrid">
+      <section class="calendar-card" id="calendarView">
+        <div class="calendar-head">
+          <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+      </section>
+
+      <aside class="detail-card" id="detailCard">
+        <div class="empty-detail">
+          <strong>날짜를 선택하세요</strong>
+          <p>캘린더에서 날짜를 누르면 해당일 초과근무자와 카드 식사 후보가 표시됩니다.</p>
+        </div>
+      </aside>
+    </main>
+
+    <section class="table-card hidden" id="tableView">
+      <div class="table-headline">
+        <div>
+          <h2>초과근무 표</h2>
+          <p>필터 조건에 맞는 초과근무 내역입니다.</p>
+        </div>
+        <button type="button" id="copyFilteredBtn">표 복사용 텍스트</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>일자</th>
+              <th>성명</th>
+              <th>직급</th>
+              <th>실제 시작</th>
+              <th>실제 종료</th>
+              <th>실제 시간합</th>
+              <th>승인상태</th>
+              <th>저녁공제</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="table-card hidden" id="cardView">
+      <div class="table-headline">
+        <div>
+          <h2>BC카드 이용내역 표</h2>
+          <p>승인일자 기준으로 정리합니다. 식사 후보는 자동 추정이므로 최종 확인은 사용자가 합니다.</p>
+        </div>
+        <button type="button" id="copyCardBtn">카드표 복사</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>승인일자</th>
+              <th>접수일자</th>
+              <th>가맹점</th>
+              <th>금액</th>
+              <th>분류</th>
+              <th>필요인원</th>
+              <th>카드번호</th>
+              <th>승인번호</th>
+            </tr>
+          </thead>
+          <tbody id="cardTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
