@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>초근 누구 v0.3.1</title>
+  <title>초근 누구 v0.3.2</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -15,8 +15,8 @@
         <p class="hero-desc">NEIS 초과근무자료를 캘린더로 정리해 특근매식비 검토를 도와줍니다.</p>
       </div>
       <div class="hero-card">
-        <strong>v0.3.1</strong>
-        <span>사용안내·보안문구</span>
+        <strong>v0.3.2</strong>
+        <span>성명 표시·카드파일 안정화</span>
       </div>
 </header>
 
@@ -48,12 +48,12 @@
         <div class="upload-copy">
           <span class="upload-icon">💳</span>
           <div>
-            <h2>2. BC카드 이용내역 선택 업로드</h2>
-            <p>BC카드 이용내역 엑셀 또는 엑셀이 들어있는 ZIP을 넣으면 식사 후보 결제와 1인 기준금액을 날짜별로 함께 보여줍니다.</p>
+            <h2>2. BC카드 승인내역/이용내역 선택 업로드</h2>
+            <p>BC카드 승인내역 또는 이용내역 엑셀을 넣어주세요. ZIP 파일도 사용할 수 있고, 파일 형식은 자동으로 판별합니다.</p>
           </div>
         </div>
         <label class="upload-button secondary">
-          카드내역 파일 선택
+          카드자료 파일 선택
           <input type="file" id="cardFileInput" accept=".xlsx,.xls,.zip,.pdf" />
         </label>
       </section>
@@ -171,8 +171,8 @@
     <section class="table-card hidden" id="cardView">
       <div class="table-headline">
         <div>
-          <h2>BC카드 이용내역 표</h2>
-          <p>승인일자 기준으로 정리합니다. 식사 후보는 자동 추정이므로 최종 확인은 사용자가 합니다.</p>
+          <h2>BC카드 자료 표</h2>
+          <p>승인내역/이용내역을 자동 판별해 승인일자 기준으로 정리합니다. 식사 후보는 자동 추정이므로 최종 확인은 사용자가 합니다.</p>
         </div>
         <button type="button" id="copyCardBtn">카드표 복사</button>
       </div>
@@ -181,7 +181,7 @@
           <thead>
             <tr>
               <th>승인일자</th>
-              <th>접수일자</th>
+              <th>접수/승인</th>
               <th>가맹점</th>
               <th>금액</th>
               <th>분류</th>

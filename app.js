@@ -162,16 +162,30 @@ function getMealLimit() {
   return Number(state.mealLimit) > 0 ? Number(state.mealLimit) : DEFAULT_MEAL_LIMIT;
 }
 
-function displayName(name) {
-  return state.maskNames ? maskName(name) : String(name || '');
+function sanitizeName(name) {
+  return String(name || '')
+    .replace(/\s*\([^)]*\)\s*/g, '')
+    .replace(/\s+/g, '')
+    .trim();
 }
 
-function maskName(name) {
-  const clean = String(name || '').replace(/\s+/g, '');
+function displayName(name, context = 'detail') {
+  const clean = sanitizeName(name);
+  return state.maskNames ? maskName(clean, context) : clean;
+}
+
+function maskName(name, context = 'detail') {
+  const clean = sanitizeName(name);
   if (!clean) return '';
-  if (clean.length === 1) return '*';
-  if (clean.length === 2) return `${clean[0]}*`;
-  return `${clean[0]}*${clean[clean.length - 1]}`;
+
+  if (context === 'calendar') {
+    if (clean.length === 1) return '○';
+    return `${clean[0]}○`;
+  }
+
+  if (clean.length === 1) return '○';
+  if (clean.length === 2) return `${clean[0]}○`;
+  return `${clean[0]}○${clean[clean.length - 1]}`;
 }
 
 function refreshCardCalculations() {
@@ -194,9 +208,10 @@ function syncMealLimitFromInput({ format = false } = {}) {
 
 
 function parseMoney(value) {
-  const text = String(value || '').replaceAll(',', '').trim();
-  const match = text.match(/-?\d+/);
-  return match ? Number(match[0]) : 0;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  const text = String(value || '').replace(/[,원\s]/g, '').trim();
+  const match = text.match(/-?\d+(?:\.\d+)?/);
+  return match ? Math.round(Number(match[0])) : 0;
 }
 
 function normalizeHeader(value) {
@@ -212,13 +227,15 @@ function parseWorkbook(workbook) {
     .map((row, index) => {
       const date = normalizeDate(row[COL.date]);
       const actualMinutes = minutesFromTime(row[COL.actualTotal]);
-      const name = String(row[COL.name] || '').trim();
+      const rawName = String(row[COL.name] || '').trim();
+      const name = sanitizeName(rawName);
       return {
-        id: `${date}-${name}-${index}`,
+        id: `${date}-${rawName || name}-${index}`,
         seq: String(row[COL.seq] || '').trim(),
         dept: String(row[COL.dept] || '').trim(),
         position: String(row[COL.position] || '').trim(),
         name,
+        rawName,
         date,
         type: String(row[COL.type] || '').trim(),
         personalStart: String(row[COL.personalStart] || '').trim(),
@@ -262,51 +279,90 @@ function classifyCard(merchant, amount, salesType = '', note = '') {
   return { isCancel, isExcluded, isMealCandidate, keywordHit, amountPattern, label };
 }
 
+function getCardWorkbookLayout(headers) {
+  const joined = headers.join('|');
+  const hasMerchant = joined.includes('가맹점명');
+  const hasApprovalAmount = joined.includes('승인금액');
+  const hasClaimAmount = joined.includes('청구금액');
+  const hasApprovalDate = joined.includes('승인일자');
+  const hasPostingApprovalDate = joined.includes('접수일자') && joined.includes('승인일자');
+
+  if (hasMerchant && hasApprovalAmount && hasApprovalDate) return 'approval';
+  if (hasMerchant && hasClaimAmount && hasPostingApprovalDate) return 'usage';
+  if (hasMerchant && hasClaimAmount) return 'usage';
+  return '';
+}
+
 function parseCardWorkbook(workbook) {
   const firstSheetName = workbook.SheetNames[0];
   const sheet = workbook.Sheets[firstSheetName];
   const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
   const headerIndex = rows.findIndex(row => {
-    const joined = row.map(normalizeHeader).join('|');
-    return joined.includes('가맹점명') && joined.includes('청구금액') && (joined.includes('승인일자') || joined.includes('접수일자'));
+    const headers = row.map(normalizeHeader);
+    return Boolean(getCardWorkbookLayout(headers));
   });
 
   if (headerIndex < 0) {
-    throw new Error('BC카드 이용내역 헤더를 찾지 못했습니다.');
+    throw new Error('BC카드 승인내역/이용내역 헤더를 찾지 못했습니다.');
   }
 
   const headers = rows[headerIndex].map(normalizeHeader);
-  const dateIdx = findColumn(headers, [h => h.includes('접수일자') || h.includes('승인일자')]);
+  const layout = getCardWorkbookLayout(headers);
+  parseCardWorkbook.lastLayout = layout;
+
+  const approvalDateIdx = findColumn(headers, [h => h.includes('승인일자')]);
+  const usageDateIdx = findColumn(headers, [h => h.includes('접수일자') && h.includes('승인일자')]);
   const claimDateIdx = findColumn(headers, [h => h === '청구일자' || h.includes('청구일자')]);
+  const approvalTimeIdx = findColumn(headers, [h => h.includes('승인시간')]);
   const cardIdx = findColumn(headers, [h => h.includes('카드번호')]);
   const merchantIdx = findColumn(headers, [h => h.includes('가맹점명')]);
-  const amountIdx = findColumn(headers, [h => h.includes('청구금액') || h.includes('이용금액')]);
+  const approvalAmountIdx = findColumn(headers, [h => h.includes('승인금액')]);
+  const claimAmountIdx = findColumn(headers, [h => h.includes('청구금액')]);
+  const amountIdx = layout === 'approval' ? approvalAmountIdx : claimAmountIdx;
   const approvalNoIdx = findColumn(headers, [h => h.includes('승인번호')]);
   const salesTypeIdx = findColumn(headers, [h => h.includes('매출종류')]);
   const noteIdx = findColumn(headers, [h => h === '비고' || h.includes('비고')]);
 
-  if ([dateIdx, merchantIdx, amountIdx].some(idx => idx < 0)) {
+  if ([merchantIdx, amountIdx].some(idx => idx < 0)) {
     throw new Error('카드내역의 필수 열을 찾지 못했습니다.');
   }
+  if (layout === 'approval' && approvalDateIdx < 0) {
+    throw new Error('승인내역의 승인일자 열을 찾지 못했습니다.');
+  }
+  if (layout === 'usage' && usageDateIdx < 0 && approvalDateIdx < 0) {
+    throw new Error('이용내역의 접수일자/(승인일자) 열을 찾지 못했습니다.');
+  }
 
-  return rows.slice(headerIndex + 1)
+  const rawRecords = rows.slice(headerIndex + 1)
     .map((row, index) => {
       const merchant = String(row[merchantIdx] || '').trim();
       const amount = parseMoney(row[amountIdx]);
       const firstCell = String(row[0] || '').replace(/\s+/g, '');
       if (!merchant || firstCell.includes('합계')) return null;
 
-      const dates = extractCardDates(row[dateIdx]);
-      const salesType = String(row[salesTypeIdx] || '').trim();
-      const note = String(row[noteIdx] || '').trim();
+      let date = '';
+      let postingDate = '';
+      if (layout === 'approval') {
+        date = normalizeDate(row[approvalDateIdx]);
+        postingDate = date;
+      } else {
+        const dates = extractCardDates(row[usageDateIdx >= 0 ? usageDateIdx : approvalDateIdx]);
+        date = dates.approvalDate || normalizeDate(row[approvalDateIdx]);
+        postingDate = dates.postingDate || date;
+      }
+
+      const salesType = salesTypeIdx >= 0 ? String(row[salesTypeIdx] || '').trim() : '';
+      const note = noteIdx >= 0 ? String(row[noteIdx] || '').trim() : '';
       const category = classifyCard(merchant, amount, salesType, note);
       const requiredPeople = amount > 0 ? Math.ceil(amount / getMealLimit()) : 0;
 
       return {
-        id: `${dates.approvalDate}-${merchant}-${index}`,
-        date: dates.approvalDate,
-        postingDate: dates.postingDate,
+        id: `${date}-${merchant}-${index}`,
+        sourceType: layout === 'approval' ? '승인내역' : '이용내역',
+        date,
+        postingDate,
         claimDate: claimDateIdx >= 0 ? normalizeDate(row[claimDateIdx]) : '',
+        approvalTime: approvalTimeIdx >= 0 ? String(row[approvalTimeIdx] || '').trim() : '',
         merchant,
         amount,
         cardNo: cardIdx >= 0 ? String(row[cardIdx] || '').trim() : '',
@@ -318,6 +374,43 @@ function parseCardWorkbook(workbook) {
       };
     })
     .filter(record => record && record.date && record.amount !== 0);
+
+  const records = layout === 'approval' ? settleApprovalRecords(rawRecords) : rawRecords;
+  return records.filter(record => record && record.date && record.amount > 0);
+}
+
+function approvalGroupKey(record) {
+  const approvalNo = String(record.approvalNo || '').replace(/\D/g, '');
+  if (approvalNo && !/^0+$/.test(approvalNo)) return `no:${approvalNo}`;
+  return `fallback:${record.date}|${record.cardNo || ''}|${record.merchant}|${Math.abs(record.amount)}`;
+}
+
+function settleApprovalRecords(records) {
+  const groups = new Map();
+  records.forEach(record => {
+    const key = approvalGroupKey(record);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(record);
+  });
+
+  return Array.from(groups.values()).map((items, groupIndex) => {
+    const positive = items.find(item => item.amount > 0 && !item.isCancel) || items.find(item => item.amount > 0) || items[0];
+    const total = items.reduce((sum, item) => sum + item.amount, 0);
+    if (total <= 0) return null;
+
+    const settled = {
+      ...positive,
+      id: `${positive.date}-${positive.approvalNo || positive.merchant}-${groupIndex}`,
+      amount: total,
+      note: items.length > 1 ? `${positive.note || ''} 취소상계 ${items.length}건`.trim() : positive.note,
+    };
+    const category = classifyCard(settled.merchant, settled.amount, settled.salesType, settled.note);
+    return {
+      ...settled,
+      requiredPeople: settled.amount > 0 ? Math.ceil(settled.amount / getMealLimit()) : 0,
+      ...category,
+    };
+  }).filter(Boolean);
 }
 
 function setupInitialMonth() {
@@ -337,7 +430,8 @@ function applyFilters() {
 
   state.filtered = state.records.filter(record => {
     if (!includeZero && record.actualMinutes <= 0) return false;
-    if (query && !record.name.toLowerCase().includes(query)) return false;
+    const searchTarget = `${record.name || ''} ${record.rawName || ''}`.toLowerCase();
+    if (query && !searchTarget.includes(query)) return false;
     if (approval !== 'all' && record.approvalStatus !== approval) return false;
     return true;
   });
@@ -460,7 +554,7 @@ function renderCalendar() {
 
     const preview = dayRecords.slice(0, 3).map(r => `
       <div class="person-chip ${r.actualMinutes <= 0 ? 'zero' : ''}">
-        <strong>${escapeHtml(displayName(r.name))}</strong>
+        <strong>${escapeHtml(displayName(r.name, 'calendar'))}</strong>
         <span>${escapeHtml(r.actualTotal)}</span>
       </div>
     `).join('');
@@ -773,7 +867,7 @@ async function handleCardFile(file) {
     const workbook = await readExcelLikeFile(file, '카드내역');
     const records = parseCardWorkbook(workbook);
     if (!records.length) {
-      showToast('읽을 수 있는 카드 이용내역을 찾지 못했어요.');
+      showToast('읽을 수 있는 카드 승인내역/이용내역을 찾지 못했어요.');
       return;
     }
 
@@ -785,7 +879,8 @@ async function handleCardFile(file) {
     const total = records.reduce((sum, c) => sum + c.amount, 0);
     const mealTotal = mealCards.reduce((sum, c) => sum + c.amount, 0);
     cardFileName.textContent = file.name;
-    cardParseNote.textContent = `카드 ${records.length}건, 식사 후보 ${mealCards.length}건, 후보금액 ${moneyFormat(mealTotal)}원, 카드합계 ${moneyFormat(total)}원을 읽었습니다.`;
+    const layoutLabel = parseCardWorkbook.lastLayout === 'approval' ? '승인내역' : '이용내역';
+    cardParseNote.textContent = `${layoutLabel} ${records.length}건, 식사 후보 ${mealCards.length}건, 후보금액 ${moneyFormat(mealTotal)}원, 카드합계 ${moneyFormat(total)}원을 읽었습니다.`;
     cardStatusCard.classList.remove('hidden');
     toolbar.classList.remove('hidden');
     contentGrid.classList.remove('hidden');
@@ -857,7 +952,7 @@ const GUIDE_CONTENT = {
     <ol>
       <li>NEIS 초과근무자료를 업로드합니다.</li>
       <li>날짜별 초과근무자를 캘린더에서 확인합니다.</li>
-      <li>필요 시 BC카드 이용내역을 추가합니다.</li>
+      <li>필요 시 BC카드 승인내역 또는 이용내역을 추가합니다.</li>
       <li>식사후보 금액과 초근자 수를 함께 확인합니다.</li>
     </ol>
   `,
@@ -865,9 +960,9 @@ const GUIDE_CONTENT = {
     <h2>자료 받는 법</h2>
     <ul>
       <li><strong>NEIS 초과근무자료</strong>: 나이스 접속 → 초과근무 확인목록 → 해당 월 조회 → 엑셀 다운로드</li>
-      <li><strong>BC카드 이용내역</strong>: BC카드 이용내역 조회 → 해당 월 전체 이용내역 조회 → 엑셀 다운로드</li>
+      <li><strong>BC카드 자료</strong>: BC카드 홈페이지 → 승인내역조회 또는 이용내역조회 → 해당 월 조회 → 엑셀 다운로드</li>
     </ul>
-    <div class="guide-note">기관별 메뉴명은 다를 수 있어요. 정확한 경로가 확인되면 도움말 문구만 교체하면 됩니다.</div>
+    <div class="guide-note">승인내역조회와 이용내역조회 엑셀을 모두 지원합니다. ZIP 안 엑셀도 사용할 수 있고, 승인내역의 취소 건은 승인번호 기준 순액으로 정리합니다.</div>
   `,
   privacy: `
     <h2>개인정보 안내</h2>
