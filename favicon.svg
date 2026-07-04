@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="calendar attendance favicon">
+  <defs>
+    <linearGradient id="bg" x1="68" y1="18" x2="456" y2="492" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0C1E43"/>
+      <stop offset="1" stop-color="#142D61"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="190" y1="330" x2="410" y2="386" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5E8CFF"/>
+      <stop offset="1" stop-color="#3F78F2"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#071532" flood-opacity=".25"/>
+    </filter>
+  </defs>
+
+  <!-- App tile -->
+  <rect width="512" height="512" rx="86" fill="url(#bg)"/>
+
+  <!-- Calendar -->
+  <g filter="url(#softShadow)">
+    <!-- top bar -->
+    <path fill="#FFFFFF" d="
+      M123 124
+      H154
+      V139
+      C154 164 174 184 199 184
+      C224 184 244 164 244 139
+      V124
+      H302
+      V139
+      C302 164 322 184 347 184
+      C372 184 392 164 392 139
+      V124
+      H406
+      C434 124 456 146 456 174
+      V209
+      H80
+      V174
+      C80 146 102 124 123 124Z"/>
+
+    <!-- binder cutouts -->
+    <circle cx="199" cy="139" r="33" fill="#102653"/>
+    <circle cx="347" cy="139" r="33" fill="#102653"/>
+
+    <!-- binder tabs -->
+    <rect x="179" y="89" width="40" height="78" rx="20" fill="#FFFFFF"/>
+    <rect x="327" y="89" width="40" height="78" rx="20" fill="#FFFFFF"/>
+
+    <!-- calendar body -->
+    <path fill="#FFFFFF" d="
+      M80 226
+      H456
+      V359
+      C456 398 425 429 386 429
+      H122
+      C99 429 80 410 80 387
+      V226Z"/>
+  </g>
+
+  <!-- Person -->
+  <circle cx="177" cy="284" r="35" fill="#102653"/>
+  <path fill="#102653" d="
+    M121 382
+    V358
+    C121 325 148 298 181 298
+    H215
+    C237 298 257 307 272 321
+    L229 365
+    C219 375 219 392 228 402
+    L121 402
+    C121 402 121 391 121 382Z"/>
+
+  <!-- Check mark -->
+  <path d="M182 354 L216 389 L267 332"
+        fill="none" stroke="#FFFFFF" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M182 354 L216 389 L267 332"
+        fill="none" stroke="url(#accent)" stroke-width="27" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Clock -->
+  <g filter="url(#softShadow)">
+    <circle cx="369" cy="351" r="91" fill="#FFFFFF" stroke="#102653" stroke-width="27"/>
+    <path d="M369 314 V358 L407 383"
+          fill="none" stroke="url(#accent)" stroke-width="25" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
