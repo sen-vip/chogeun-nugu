@@ -571,7 +571,7 @@ function renderCalendar() {
       <button type="button" class="day-cell ${hasData ? 'has-data' : ''} ${state.selectedDate === dateKey ? 'selected' : ''}" data-date="${dateKey}">
         <div class="day-top">
           <span class="day-num">${day}</span>
-          ${count ? `<span class="day-count">${zeroOnly ? '00:00' : '초근'} ${count}</span>` : ''}
+          ${count ? `<span class="day-count" data-kind="${zeroOnly ? '00:00' : '초근'}" data-count="${count}">${zeroOnly ? '00:00' : '초근'} ${count}</span>` : ''}
         </div>
         <div class="person-list">${preview}${more}</div>
         ${cardLine}

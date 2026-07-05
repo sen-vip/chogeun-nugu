@@ -698,3 +698,634 @@ tr.meal-row td { background: #fffdf7; }
   .calendar-titleline { align-items: flex-start; flex-direction: column; }
   .meal-legend { justify-content: flex-start; }
 }
+
+/* v0.3.3 모바일 보기 개선 */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+button,
+.upload-button,
+.guide-btn,
+.switch-label,
+.mask-toggle {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.upload-button,
+.status-card button,
+.view-toggle button,
+.tool-group button,
+#copyFilteredBtn,
+#copyCardBtn,
+.copy-day {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+#copyCardBtn {
+  border: 0;
+  border-radius: 14px;
+  background: #eef1f6;
+  color: var(--navy);
+  padding: 13px 18px;
+  font-weight: 800;
+}
+
+.upload-copy,
+.status-card,
+.table-headline,
+.detail-row-main,
+.card-row-main {
+  min-width: 0;
+}
+
+.upload-copy > div,
+.status-card > div,
+.table-headline > div,
+.detail-row-main > strong,
+.card-row-main > strong {
+  min-width: 0;
+}
+
+.table-wrap {
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 760px) {
+  :root {
+    --shadow: 0 10px 26px rgba(30, 48, 80, 0.07);
+    --radius: 18px;
+  }
+
+  body {
+    background:
+      radial-gradient(circle at -12% -8%, #eaf2ff 0, transparent 34%),
+      linear-gradient(180deg, #f7f9fd 0%, #f3f6fb 100%);
+  }
+
+  .app-shell {
+    width: min(100% - 16px, 1180px);
+    padding: 12px 0 34px;
+  }
+
+  .hero {
+    padding: 22px 20px;
+    border-radius: 22px;
+    gap: 18px;
+    align-items: stretch;
+  }
+
+  .eyebrow {
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+
+  h1 {
+    font-size: clamp(34px, 15vw, 48px);
+    letter-spacing: -0.075em;
+  }
+
+  .hero-desc {
+    margin-top: 12px;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .hero-card {
+    min-width: 0;
+    width: 100%;
+    border-radius: 18px;
+    padding: 15px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .hero-card strong {
+    font-size: 20px;
+    white-space: nowrap;
+  }
+
+  .hero-card span {
+    margin-top: 0;
+    text-align: right;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .guide-panel,
+  .upload-stack,
+  .settings-strip,
+  .status-card,
+  .summary-grid,
+  .toolbar,
+  .content-grid,
+  .table-card {
+    margin-top: 12px;
+  }
+
+  .guide-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .guide-btn {
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 6px;
+    font-size: 12px;
+    letter-spacing: -0.04em;
+  }
+
+  .guide-box {
+    padding: 14px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.58;
+  }
+
+  .guide-box ol,
+  .guide-box ul {
+    margin-left: 16px;
+  }
+
+  .upload-stack {
+    gap: 10px;
+  }
+
+  .upload-panel {
+    min-height: auto;
+    padding: 18px;
+    border-radius: 18px;
+    gap: 16px;
+  }
+
+  .upload-copy {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .upload-icon {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    border-radius: 15px;
+    font-size: 23px;
+  }
+
+  .upload-copy h2 {
+    font-size: 17px;
+    line-height: 1.28;
+  }
+
+  .upload-copy p {
+    margin-top: 6px;
+    font-size: 14px;
+    line-height: 1.48;
+  }
+
+  .upload-button {
+    width: 100%;
+    padding: 13px 14px;
+    border-radius: 14px;
+  }
+
+  .settings-strip {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .mini-setting,
+  .mask-toggle {
+    width: 100%;
+    min-height: 44px;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .92);
+  }
+
+  .mini-setting input {
+    width: 92px;
+    height: 30px;
+  }
+
+  .status-card {
+    padding: 15px;
+    border-radius: 16px;
+  }
+
+  .status-card strong,
+  .status-card p {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .status-card p {
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .status-card button {
+    width: 100%;
+    border-radius: 13px;
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .summary-item {
+    padding: 13px 12px;
+    border-radius: 16px;
+  }
+
+  .summary-item span {
+    font-size: 12px;
+  }
+
+  .summary-item strong {
+    margin-top: 5px;
+    font-size: clamp(20px, 7vw, 25px);
+    line-height: 1.12;
+    word-break: keep-all;
+  }
+
+  .toolbar {
+    position: static;
+    padding: 12px;
+    border-radius: 18px;
+    gap: 9px;
+  }
+
+  .month-control {
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
+    gap: 8px;
+  }
+
+  .month-control strong {
+    min-width: 0;
+    align-self: center;
+    font-size: 17px;
+  }
+
+  .filters {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .filters input,
+  .filters select,
+  .switch-label {
+    width: 100%;
+    min-height: 44px;
+    height: 44px;
+    border-radius: 13px;
+  }
+
+  .switch-label {
+    justify-content: flex-start;
+    font-size: 14px;
+  }
+
+  .view-toggle {
+    width: 100%;
+    padding: 4px;
+    border-radius: 14px;
+  }
+
+  .view-toggle button {
+    flex: 1 1 0;
+    min-height: 40px;
+    padding: 8px 7px;
+    border-radius: 11px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .calendar-card,
+  .detail-card,
+  .table-card {
+    border-radius: 18px;
+  }
+
+  .calendar-titleline {
+    padding: 14px 12px 0;
+    gap: 8px;
+  }
+
+  .meal-legend {
+    gap: 5px 8px;
+    font-size: 11px;
+  }
+
+  .legend-label {
+    width: 100%;
+  }
+
+  .calendar-head {
+    padding: 12px 8px 7px;
+    font-size: 12px;
+  }
+
+  .calendar-grid {
+    gap: 4px;
+    padding: 0 8px 10px;
+  }
+
+  .day-cell {
+    min-height: 78px;
+    padding: 6px 5px;
+    border-radius: 12px;
+    gap: 5px;
+  }
+
+  .day-cell:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .day-cell.selected {
+    box-shadow: 0 0 0 2px rgba(79, 124, 255, .18);
+  }
+
+  .day-top {
+    gap: 4px;
+  }
+
+  .day-num {
+    font-size: 13px;
+  }
+
+  .day-count {
+    min-width: 20px;
+    height: 20px;
+    justify-content: center;
+    padding: 0 5px;
+    font-size: 0;
+    border-radius: 999px;
+  }
+
+  .day-count::before {
+    content: attr(data-count);
+    font-size: 11px;
+    font-weight: 950;
+  }
+
+  .person-list {
+    gap: 3px;
+  }
+
+  .person-chip {
+    width: 100%;
+    min-width: 0;
+    padding: 3px 5px;
+    border-radius: 8px;
+    font-size: 10.5px;
+    line-height: 1.15;
+  }
+
+  .person-chip strong {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .person-chip span:last-child {
+    display: none;
+  }
+
+  .more-text {
+    font-size: 10.5px;
+  }
+
+  .card-line {
+    padding: 5px;
+    border-radius: 9px;
+    gap: 2px;
+  }
+
+  .card-line .meal-label {
+    max-width: 100%;
+    padding: 1px 5px;
+    font-size: 10px;
+  }
+
+  .card-line .meal-amount {
+    font-size: 11px;
+    line-height: 1.05;
+  }
+
+  .card-line .meal-meta {
+    display: none;
+  }
+
+  .detail-card {
+    padding: 16px;
+    min-height: auto;
+  }
+
+  .detail-title {
+    align-items: flex-start;
+  }
+
+  .detail-title h2 {
+    font-size: 20px;
+  }
+
+  .detail-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .detail-mini {
+    padding: 10px;
+    border-radius: 13px;
+  }
+
+  .detail-mini strong {
+    font-size: 16px;
+    line-height: 1.25;
+  }
+
+  .detail-row,
+  .card-detail-row,
+  .empty-box,
+  .meal-judgement {
+    border-radius: 13px;
+  }
+
+  .detail-row-main,
+  .card-row-main {
+    align-items: flex-start;
+  }
+
+  .detail-row-main strong,
+  .card-row-main strong {
+    overflow-wrap: anywhere;
+  }
+
+  .detail-row-main span,
+  .card-row-main span {
+    flex: 0 0 auto;
+  }
+
+  .detail-row-sub {
+    font-size: 12.5px;
+  }
+
+  .copy-day {
+    border-radius: 13px;
+  }
+
+  .table-headline {
+    padding: 16px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .table-headline h2 {
+    font-size: 20px;
+  }
+
+  .table-headline p {
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  #copyFilteredBtn,
+  #copyCardBtn {
+    width: 100%;
+    border-radius: 13px;
+  }
+
+  .table-wrap {
+    max-height: 62vh;
+  }
+
+  table {
+    min-width: 720px;
+  }
+
+  th,
+  td {
+    padding: 11px 12px;
+    font-size: 13px;
+  }
+
+  .toast {
+    left: 8px;
+    right: 8px;
+    bottom: 14px;
+    width: auto;
+    transform: translateY(18px);
+    border-radius: 16px;
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  .toast.show {
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 420px) {
+  .app-shell {
+    width: min(100% - 12px, 1180px);
+    padding-top: 8px;
+  }
+
+  .hero {
+    padding: 19px 17px;
+  }
+
+  .hero-card {
+    display: block;
+  }
+
+  .hero-card span {
+    display: block;
+    margin-top: 5px;
+    text-align: left;
+  }
+
+  .guide-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .summary-item {
+    padding: 12px 10px;
+  }
+
+  .summary-item strong {
+    font-size: 20px;
+  }
+
+  .calendar-head {
+    padding-inline: 6px;
+  }
+
+  .calendar-grid {
+    gap: 3px;
+    padding-inline: 6px;
+  }
+
+  .day-cell {
+    min-height: 72px;
+    padding: 5px 4px;
+    border-radius: 10px;
+  }
+
+  .day-num {
+    font-size: 12px;
+  }
+
+  .day-count {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+  }
+
+  .day-count::before {
+    font-size: 10px;
+  }
+
+  .person-chip {
+    padding: 3px 4px;
+    font-size: 10px;
+  }
+
+  .card-line .meal-label {
+    display: none;
+  }
+
+  .card-line .meal-amount {
+    font-size: 10.5px;
+  }
+
+  .detail-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
