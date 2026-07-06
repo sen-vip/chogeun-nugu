@@ -3,26 +3,39 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>초근 누구 v0.3.4</title>
+  <title>초근 누구 v0.3.8</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="shortcut icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <nav class="topbar" aria-label="초근 누구 상단바">
+    <div class="topbar-inner">
+      <div class="topbar-brand">
+        <strong>초근 누구</strong>
+      </div>
+      <div class="topbar-actions">
+        <a href="#helpSection">도움말</a>
+        <a href="https://github.com/sen-vip/chogeun-nugu" target="_blank" rel="noopener">GitHub</a>
+        <em>v0.3.8</em>
+      </div>
+    </div>
+  </nav>
+
   <div class="app-shell">
     <header class="hero">
-      <div>
+      <div class="hero-copy">
         <p class="eyebrow">학돌랩 · 초과근무 확인 도구</p>
         <h1>초근 누구</h1>
         <p class="hero-desc">NEIS 초과근무 최종자료를 캘린더로 정리해 특근매식비 검토를 도와줍니다.</p>
       </div>
       <div class="hero-card">
-        <strong>v0.3.4</strong>
-        <span>NEIS 최종자료 경로 반영</span>
+        <strong>v0.3.8</strong>
+        <span>고정바 겹침·투명도 정리</span>
       </div>
 </header>
 
-    <section class="guide-panel" aria-label="사용안내">
+    <section class="guide-panel" id="helpSection" aria-label="사용안내">
       <div class="guide-actions" role="tablist" aria-label="도움말 선택">
         <button type="button" class="guide-btn" data-guide="how">사용방법</button>
         <button type="button" class="guide-btn" data-guide="source">자료 받는 법</button>
@@ -122,10 +135,10 @@
       <section class="calendar-card" id="calendarView">
         <div class="calendar-titleline">
           <strong>월간 캘린더</strong>
-          <div class="meal-legend" aria-label="식사후보 상태 범례">
-            <span class="legend-label">식사후보 상태</span>
-            <span class="legend-dot ok">기준이내</span>
-            <span class="legend-dot warn">초과의심</span>
+          <div class="meal-legend" aria-label="식비 검토 상태 범례">
+            <span class="legend-label">식비 검토 상태</span>
+            <span class="legend-dot ok">지급기준 충족</span>
+            <span class="legend-dot warn">기준초과</span>
             <span class="legend-dot danger">근거없음</span>
           </div>
         </div>
@@ -196,6 +209,9 @@
         </table>
       </div>
     </section>
+    <footer class="site-footer">
+      <span>초근 누구 · <strong>senvip</strong></span>
+    </footer>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>

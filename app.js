@@ -274,7 +274,7 @@ function classifyCard(merchant, amount, salesType = '', note = '') {
   let label = '일반';
   if (isCancel) label = '취소/차감';
   else if (isExcluded) label = '제외 추정';
-  else if (isMealCandidate) label = keywordHit ? '식사 후보' : '금액 후보';
+  else if (isMealCandidate) label = keywordHit ? '식비 후보' : '금액 후보';
 
   return { isCancel, isExcluded, isMealCandidate, keywordHit, amountPattern, label };
 }
@@ -463,7 +463,7 @@ function renderSummary() {
     items.push(
       ['카드 이용', `${state.cardRecords.length}건`],
       ['카드 합계', `${moneyFormat(cardTotal)}원`],
-      ['식사 후보', `${mealCards.length}건`],
+      ['식비 후보', `${mealCards.length}건`],
       ['후보 금액', `${moneyFormat(mealTotal)}원`],
       ['주의 일자', `${riskyDates}일`],
     );
@@ -507,19 +507,19 @@ function getMealStatus(workedCount, mealTotal) {
   const limit = getMealLimit();
   const possible = workedCount * limit;
   if (workedCount === 0) return { className: 'danger', label: '근거없음' };
-  if (mealTotal > possible) return { className: 'warn', label: '초과의심' };
-  return { className: 'ok', label: '기준이내' };
+  if (mealTotal > possible) return { className: 'warn', label: '기준초과' };
+  return { className: 'ok', label: '지급기준 충족' };
 }
 
 function getMealJudgementText(status) {
-  if (status.label === '기준이내') {
+  if (status.label === '지급기준 충족') {
     return '금액은 기준 이내입니다. 실제 대상자와 사용 목적은 원인행위/증빙자료로 확인하세요.';
   }
-  if (status.label === '초과의심') {
-    return '식사후보 금액이 초근자 기준 가능액을 초과합니다. 원인행위/실제 사용 목적을 확인하세요.';
+  if (status.label === '기준초과') {
+    return '식비 후보금액이 초근자 기준 가능액을 초과합니다. 원인행위와 실제 사용 목적을 확인하세요.';
   }
   if (status.label === '근거없음') {
-    return '식사후보 카드 사용은 있으나, 해당 날짜의 실제 초과근무자가 없습니다. 원인행위/실제 사용 목적을 확인하세요.';
+    return '식비 후보 카드 사용은 있으나, 해당 날짜의 실제 초과근무자가 없습니다. 원인행위와 실제 사용 목적을 확인하세요.';
   }
   return '';
 }
@@ -560,8 +560,8 @@ function renderCalendar() {
     `).join('');
     const more = dayRecords.length > 3 ? `<div class="more-text">외 ${dayRecords.length - 3}명</div>` : '';
     const cardLine = mealCards.length ? `
-      <div class="card-line ${mealStatus.className}" aria-label="식사후보 ${mealCards.length}건 ${moneyFormat(mealTotal)}원 ${mealStatus.label}">
-        <span class="meal-label">식사후보</span>
+      <div class="card-line ${mealStatus.className}" aria-label="식비후보 ${mealCards.length}건 ${moneyFormat(mealTotal)}원 ${mealStatus.label}">
+        <span class="meal-label">식비후보</span>
         <strong class="meal-amount">${moneyFormat(mealTotal)}원</strong>
         <em class="meal-meta">${mealCards.length}건 · ${mealStatus.label}</em>
       </div>
@@ -595,7 +595,7 @@ function renderDetail() {
     detailCard.innerHTML = `
       <div class="empty-detail">
         <strong>날짜를 선택하세요</strong>
-        <p>캘린더에서 날짜를 누르면 해당일 초과근무자와 카드 식사 후보가 표시됩니다.</p>
+        <p>캘린더에서 날짜를 누르면 해당일 초과근무자와 카드 식비 후보가 표시됩니다.</p>
       </div>
     `;
     return;
@@ -659,7 +659,7 @@ function renderDetail() {
         </div>
       </div>
     `;
-  }).join('') : `<div class="empty-box">${state.cardRecords.length ? '식사 후보 카드내역이 없습니다. 카드 전체 보기를 켜면 전체 내역을 볼 수 있어요.' : '카드내역을 업로드하면 이곳에 표시됩니다.'}</div>`;
+  }).join('') : `<div class="empty-box">${state.cardRecords.length ? '식비 후보 카드내역이 없습니다. 카드 전체 보기를 켜면 전체 내역을 볼 수 있어요.' : '카드내역을 업로드하면 이곳에 표시됩니다.'}</div>`;
 
   detailCard.innerHTML = `
     <div class="detail-title">
@@ -669,7 +669,7 @@ function renderDetail() {
     <div class="detail-summary">
       <div class="detail-mini"><span>실제 초근자</span><strong>${worked.length}명</strong></div>
       <div class="detail-mini"><span>인정 가능액</span><strong>${moneyFormat(possibleMeal)}원</strong></div>
-      <div class="detail-mini"><span>식사 후보금액</span><strong>${moneyFormat(mealTotal)}원</strong></div>
+      <div class="detail-mini"><span>식비 후보금액</span><strong>${moneyFormat(mealTotal)}원</strong></div>
       <div class="detail-mini"><span>금액 기준인원</span><strong>${neededPeople}명</strong></div>
     </div>
     ${mealTotal > 0 ? `<div class="meal-judgement ${mealStatus.className}">${escapeHtml(getMealJudgementText(mealStatus))}</div>` : ''}
@@ -678,7 +678,7 @@ function renderDetail() {
       <div class="detail-list">${overtimeRows}</div>
     </section>
     <section class="detail-section">
-      <h3>카드 식사 후보${showAllCards.checked ? ' / 전체' : ''}</h3>
+      <h3>카드 식비 후보${showAllCards.checked ? ' / 전체' : ''}</h3>
       <div class="detail-list">${cardRows}</div>
     </section>
     <button type="button" class="copy-day" id="copyDayBtn">이 날짜 내용 복사</button>
@@ -690,8 +690,8 @@ function renderDetail() {
 function getSingleCardStatus(card, workedCount) {
   if (!card.isMealCandidate) return { className: 'zero', label: card.label };
   if (workedCount === 0) return { className: 'danger', label: '근거없음' };
-  if (card.amount > workedCount * getMealLimit()) return { className: 'warn', label: '초과의심' };
-  return { className: 'ok', label: '기준이내' };
+  if (card.amount > workedCount * getMealLimit()) return { className: 'warn', label: '기준초과' };
+  return { className: 'ok', label: '지급기준 충족' };
 }
 
 function renderTable() {
@@ -755,12 +755,12 @@ function copyDayText(dateKey, records, cards, possibleMeal, mealTotal) {
   const lines = [
     `[초근 누구] ${dateLabel(dateKey)}`,
     `실제 초근자 ${worked.length}명 / 매식 가능액 ${moneyFormat(possibleMeal)}원`,
-    `카드 식사 후보 ${mealCards.length}건 / 후보금액 ${moneyFormat(mealTotal)}원`,
+    `카드 식비 후보 ${mealCards.length}건 / 후보금액 ${moneyFormat(mealTotal)}원`,
     '',
     '[초과근무자]',
     ...worked.map(r => `- ${displayName(r.name)}: ${r.actualStart || '-'}~${r.actualEnd || '-'} / ${r.actualTotal}`),
     '',
-    '[카드 식사 후보]',
+    '[카드 식비 후보]',
     ...mealCards.map(c => {
       const cardStatus = getSingleCardStatus(c, worked.length);
       return `- ${c.merchant}: ${moneyFormat(c.amount)}원 / ${c.label} / ${cardStatus.label}`;
@@ -880,7 +880,7 @@ async function handleCardFile(file) {
     const mealTotal = mealCards.reduce((sum, c) => sum + c.amount, 0);
     cardFileName.textContent = file.name;
     const layoutLabel = parseCardWorkbook.lastLayout === 'approval' ? '승인내역' : '이용내역';
-    cardParseNote.textContent = `${layoutLabel} ${records.length}건, 식사 후보 ${mealCards.length}건, 후보금액 ${moneyFormat(mealTotal)}원, 카드합계 ${moneyFormat(total)}원을 읽었습니다.`;
+    cardParseNote.textContent = `${layoutLabel} ${records.length}건, 식비 후보 ${mealCards.length}건, 후보금액 ${moneyFormat(mealTotal)}원, 카드합계 ${moneyFormat(total)}원을 읽었습니다.`;
     cardStatusCard.classList.remove('hidden');
     toolbar.classList.remove('hidden');
     contentGrid.classList.remove('hidden');
@@ -917,7 +917,7 @@ function resetApp() {
   detailCard.innerHTML = `
     <div class="empty-detail">
       <strong>날짜를 선택하세요</strong>
-      <p>캘린더에서 날짜를 누르면 해당일 초과근무자와 카드 식사 후보가 표시됩니다.</p>
+      <p>캘린더에서 날짜를 누르면 해당일 초과근무자와 카드 식비 후보가 표시됩니다.</p>
     </div>
   `;
 }
@@ -953,7 +953,7 @@ const GUIDE_CONTENT = {
       <li>NEIS 초과근무 최종자료를 업로드합니다.</li>
       <li>날짜별 초과근무자를 캘린더에서 확인합니다.</li>
       <li>필요 시 BC카드 승인내역 또는 이용내역을 추가합니다.</li>
-      <li>식사후보 금액과 초근자 수를 함께 확인합니다.</li>
+      <li>식비 후보금액과 초근자 수를 함께 확인합니다.</li>
     </ol>
   `,
   source: `
