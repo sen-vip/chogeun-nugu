@@ -215,15 +215,103 @@ function parseMoney(value) {
 }
 
 function normalizeHeader(value) {
-  return String(value || '').replace(/\s+/g, '').trim();
+  return String(value || '').replace(/^\uFEFF/, '').replace(/\s+/g, '').trim();
+}
+
+
+function rowsFromWorkbook(workbook) {
+  if (workbook?.__rows) return workbook.__rows;
+  const firstSheetName = workbook.SheetNames[0];
+  const sheet = workbook.Sheets[firstSheetName];
+  return XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
+}
+
+function findOvertimeHeaderIndex(rows) {
+  return rows.findIndex(row => {
+    const headers = row.map(normalizeHeader);
+    const hasName = headers.some(header => header === '성명');
+    const hasDate = headers.some(header => header.includes('초과근무') && header.includes('일자'));
+    const hasActualTotal = headers.some(header => header.includes('실제초과') && header.includes('시간합'));
+    const hasApproval = headers.some(header => header.includes('승인') && header.includes('상태'));
+    return hasName && hasDate && hasActualTotal && hasApproval;
+  });
+}
+
+function decodeTextBuffer(buffer) {
+  const utf8 = new TextDecoder('utf-8').decode(buffer);
+  if (utf8.includes('\uFFFD')) {
+    try {
+      return new TextDecoder('euc-kr').decode(buffer).replace(/^\uFEFF/, '');
+    } catch (error) {
+      return utf8.replace(/^\uFEFF/, '');
+    }
+  }
+  return utf8.replace(/^\uFEFF/, '');
+}
+
+function parseCsvRows(text) {
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i];
+
+    if (inQuotes) {
+      if (char === '"') {
+        if (text[i + 1] === '"') {
+          field += '"';
+          i += 1;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        field += char;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inQuotes = true;
+    } else if (char === ',') {
+      row.push(field);
+      field = '';
+    } else if (char === '\r') {
+      if (text[i + 1] === '\n') i += 1;
+      row.push(field);
+      if (row.some(cell => String(cell).trim() !== '')) rows.push(row);
+      row = [];
+      field = '';
+    } else if (char === '\n') {
+      row.push(field);
+      if (row.some(cell => String(cell).trim() !== '')) rows.push(row);
+      row = [];
+      field = '';
+    } else {
+      field += char;
+    }
+  }
+
+  if (field || row.length) {
+    row.push(field);
+    if (row.some(cell => String(cell).trim() !== '')) rows.push(row);
+  }
+
+  return rows;
+}
+
+function workbookFromCsvBuffer(buffer) {
+  const text = decodeTextBuffer(buffer);
+  return { __rows: parseCsvRows(text), __kind: 'csv' };
 }
 
 function parseWorkbook(workbook) {
-  const firstSheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[firstSheetName];
-  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
+  const rows = rowsFromWorkbook(workbook);
+  const headerIndex = findOvertimeHeaderIndex(rows);
+  const dataRows = headerIndex >= 0 ? rows.slice(headerIndex + 1) : rows.slice(2);
 
-  return rows.slice(2)
+  return dataRows
     .map((row, index) => {
       const date = normalizeDate(row[COL.date]);
       const actualMinutes = minutesFromTime(row[COL.actualTotal]);
@@ -813,22 +901,32 @@ async function readExcelLikeFile(file, purpose) {
 
   const lower = file.name.toLowerCase();
   const buffer = await file.arrayBuffer();
+  const allowCsv = purpose === '초과근무';
 
   if (lower.endsWith('.pdf')) {
-    throw new Error('PDF는 표 구조상 금액 파싱이 불안정합니다. BC카드 엑셀 또는 ZIP 파일을 사용해주세요.');
+    throw new Error('PDF는 표 구조상 파싱이 불안정합니다. 엑셀, CSV 또는 ZIP 파일을 사용해주세요.');
+  }
+
+  if (lower.endsWith('.csv')) {
+    if (!allowCsv) throw new Error(`${purpose} 파일은 엑셀 또는 ZIP만 지원합니다.`);
+    return workbookFromCsvBuffer(buffer);
   }
 
   if (lower.endsWith('.zip')) {
     if (!window.JSZip) throw new Error('ZIP 읽기 라이브러리를 불러오지 못했습니다.');
     const zip = await JSZip.loadAsync(buffer);
-    const target = Object.values(zip.files).find(entry => !entry.dir && /\.(xlsx|xls)$/i.test(entry.name));
-    if (!target) throw new Error('ZIP 안에서 엑셀 파일을 찾지 못했습니다.');
-    const xlsxBuffer = await target.async('arraybuffer');
-    return XLSX.read(xlsxBuffer, { type: 'array', cellDates: true });
+    const pattern = allowCsv ? /\.(xlsx|xls|csv)$/i : /\.(xlsx|xls)$/i;
+    const target = Object.values(zip.files).find(entry => !entry.dir && pattern.test(entry.name));
+    if (!target) {
+      throw new Error(allowCsv ? 'ZIP 안에서 엑셀 또는 CSV 파일을 찾지 못했습니다.' : 'ZIP 안에서 엑셀 파일을 찾지 못했습니다.');
+    }
+    const targetBuffer = await target.async('arraybuffer');
+    if (/\.csv$/i.test(target.name)) return workbookFromCsvBuffer(targetBuffer);
+    return XLSX.read(targetBuffer, { type: 'array', cellDates: true });
   }
 
   if (!/\.(xlsx|xls)$/i.test(lower)) {
-    throw new Error(`${purpose} 파일은 엑셀 또는 ZIP만 지원합니다.`);
+    throw new Error(allowCsv ? `${purpose} 파일은 엑셀, CSV 또는 ZIP만 지원합니다.` : `${purpose} 파일은 엑셀 또는 ZIP만 지원합니다.`);
   }
 
   return XLSX.read(buffer, { type: 'array', cellDates: true });
@@ -854,7 +952,7 @@ async function handleFile(file) {
     toolbar.classList.remove('hidden');
     contentGrid.classList.remove('hidden');
     setView('calendar');
-    showToast('초과근무자료를 불러왔어요.');
+    showToast(file.name.toLowerCase().endsWith('.csv') ? 'CSV 초과근무자료를 불러왔어요.' : '초과근무자료를 불러왔어요.');
   } catch (error) {
     console.error(error);
     showToast(error.message || '파일을 읽는 중 오류가 발생했어요.');
@@ -950,7 +1048,7 @@ const GUIDE_CONTENT = {
   how: `
     <h2>사용방법</h2>
     <ol>
-      <li>NEIS 초과근무 최종자료를 업로드합니다.</li>
+      <li>NEIS 초과근무 최종자료 엑셀 또는 CSV를 업로드합니다.</li>
       <li>날짜별 초과근무자를 캘린더에서 확인합니다.</li>
       <li>필요 시 BC카드 승인내역 또는 이용내역을 추가합니다.</li>
       <li>식비 후보금액과 초근자 수를 함께 확인합니다.</li>
@@ -959,7 +1057,7 @@ const GUIDE_CONTENT = {
   source: `
     <h2>자료 받는 법</h2>
     <ul>
-      <li><strong>NEIS 초과근무 최종자료</strong>: 나이스 접속 → 급여 → 복무 → 초과근무관리 → 초과근무확인 → 해당 월 조회 → 엑셀 내려받기</li>
+      <li><strong>NEIS 초과근무 최종자료</strong>: 나이스 접속 → 급여 → 복무 → 초과근무관리 → 초과근무확인 → 해당 월 조회 → 엑셀 또는 CSV 내려받기</li>
       <li><strong>BC카드 자료</strong>: BC카드 홈페이지 → 승인내역조회 또는 이용내역조회 → 해당 월 조회 → 엑셀 다운로드</li>
     </ul>
     <div class="guide-note">승인내역조회와 이용내역조회 엑셀을 모두 지원합니다. ZIP 안 엑셀도 사용할 수 있고, 승인내역의 취소 건은 승인번호 기준 순액으로 정리합니다.</div>
