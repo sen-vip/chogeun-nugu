@@ -237,6 +237,30 @@ function findOvertimeHeaderIndex(rows) {
   });
 }
 
+function getOvertimeColumns(headerRow) {
+  const headers = (headerRow || []).map(normalizeHeader);
+  const pick = (tests, fallback) => {
+    const index = headers.findIndex(header => tests.some(test => test(header)));
+    return index >= 0 ? index : fallback;
+  };
+
+  return {
+    ...COL,
+    seq: pick([h => h === '순번' || h === '번호'], COL.seq),
+    dept: pick([h => h.includes('부서')], COL.dept),
+    position: pick([h => h === '직위' || h.includes('직위')], COL.position),
+    name: pick([h => h === '성명'], COL.name),
+    date: pick([h => h.includes('초과근무') && h.includes('일자')], COL.date),
+    type: pick([h => h.includes('근무') && h.includes('유형')], COL.type),
+    requestStatus: pick([h => h.includes('신청') && h.includes('상태')], COL.requestStatus),
+    approvalStatus: pick([h => h.includes('승인') && h.includes('상태')], COL.approvalStatus),
+    holidayRequest: pick([h => h.includes('휴일') && h.includes('신청')], COL.holidayRequest),
+    flexibleRequest: pick([h => (h.includes('유연') || h.includes('탄력')) && h.includes('신청')], COL.flexibleRequest),
+    dinnerDeduct: pick([h => (h.includes('저녁') || h.includes('석식')) && (h.includes('공제') || h.includes('차감'))], COL.dinnerDeduct),
+    substituteHoliday: pick([h => (h.includes('대체') || h.includes('보상')) && (h.includes('휴무') || h.includes('휴일'))], COL.substituteHoliday),
+  };
+}
+
 function decodeTextBuffer(buffer) {
   const utf8 = new TextDecoder('utf-8').decode(buffer);
   if (utf8.includes('\uFFFD')) {
@@ -309,39 +333,40 @@ function workbookFromCsvBuffer(buffer) {
 function parseWorkbook(workbook) {
   const rows = rowsFromWorkbook(workbook);
   const headerIndex = findOvertimeHeaderIndex(rows);
+  const columns = headerIndex >= 0 ? getOvertimeColumns(rows[headerIndex]) : COL;
   const dataRows = headerIndex >= 0 ? rows.slice(headerIndex + 1) : rows.slice(2);
 
   return dataRows
     .map((row, index) => {
-      const date = normalizeDate(row[COL.date]);
-      const actualMinutes = minutesFromTime(row[COL.actualTotal]);
-      const rawName = String(row[COL.name] || '').trim();
+      const date = normalizeDate(row[columns.date]);
+      const actualMinutes = minutesFromTime(row[columns.actualTotal]);
+      const rawName = String(row[columns.name] || '').trim();
       const name = sanitizeName(rawName);
       return {
         id: `${date}-${rawName || name}-${index}`,
-        seq: String(row[COL.seq] || '').trim(),
-        dept: String(row[COL.dept] || '').trim(),
-        position: String(row[COL.position] || '').trim(),
+        seq: String(row[columns.seq] || '').trim(),
+        dept: String(row[columns.dept] || '').trim(),
+        position: String(row[columns.position] || '').trim(),
         name,
         rawName,
         date,
-        type: String(row[COL.type] || '').trim(),
-        personalStart: String(row[COL.personalStart] || '').trim(),
-        personalEnd: String(row[COL.personalEnd] || '').trim(),
-        requestStart: String(row[COL.requestStart] || '').trim(),
-        requestEnd: String(row[COL.requestEnd] || '').trim(),
-        requestTotal: String(row[COL.requestTotal] || '').trim(),
-        actualStart: String(row[COL.actualStart] || '').trim(),
-        actualEnd: String(row[COL.actualEnd] || '').trim(),
-        afterClassDeduct: String(row[COL.afterClassDeduct] || '').trim(),
-        actualTotal: String(row[COL.actualTotal] || '').trim() || '00:00',
+        type: String(row[columns.type] || '').trim(),
+        personalStart: String(row[columns.personalStart] || '').trim(),
+        personalEnd: String(row[columns.personalEnd] || '').trim(),
+        requestStart: String(row[columns.requestStart] || '').trim(),
+        requestEnd: String(row[columns.requestEnd] || '').trim(),
+        requestTotal: String(row[columns.requestTotal] || '').trim(),
+        actualStart: String(row[columns.actualStart] || '').trim(),
+        actualEnd: String(row[columns.actualEnd] || '').trim(),
+        afterClassDeduct: String(row[columns.afterClassDeduct] || '').trim(),
+        actualTotal: String(row[columns.actualTotal] || '').trim() || '00:00',
         actualMinutes,
-        requestStatus: String(row[COL.requestStatus] || '').trim(),
-        approvalStatus: String(row[COL.approvalStatus] || '').trim(),
-        holidayRequest: String(row[COL.holidayRequest] || '').trim(),
-        flexibleRequest: String(row[COL.flexibleRequest] || '').trim(),
-        dinnerDeduct: String(row[COL.dinnerDeduct] || '').trim(),
-        substituteHoliday: String(row[COL.substituteHoliday] || '').trim(),
+        requestStatus: String(row[columns.requestStatus] || '').trim(),
+        approvalStatus: String(row[columns.approvalStatus] || '').trim(),
+        holidayRequest: String(row[columns.holidayRequest] || '').trim(),
+        flexibleRequest: String(row[columns.flexibleRequest] || '').trim(),
+        dinnerDeduct: String(row[columns.dinnerDeduct] || '').trim(),
+        substituteHoliday: String(row[columns.substituteHoliday] || '').trim(),
       };
     })
     .filter(record => record.name && record.date);
