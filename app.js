@@ -608,11 +608,11 @@ function renderSummary() {
   const possibleMeal = worked.length * getMealLimit();
 
   const items = [
-    ['전체 건수', `${state.records.length}건`],
-    ['실제 초근', `${worked.length}건`],
-    ['초근 일수', `${days.size}일`],
-    ['초근 인원', `${people.size}명`],
-    ['매식 가능액', `${moneyFormat(possibleMeal)}원`],
+    { label: '전체 건수', value: `${state.records.length}건` },
+    { label: '실제 초근', value: `${worked.length}건` },
+    { label: '초근 일수', value: `${days.size}일` },
+    { label: '초근 인원', value: `${people.size}명` },
+    { label: '매식 가능액', value: `${moneyFormat(possibleMeal)}원`, tone: 'meal' },
   ];
 
   if (state.cardRecords.length) {
@@ -621,16 +621,16 @@ function renderSummary() {
     const mealTotal = mealCards.reduce((sum, c) => sum + c.amount, 0);
     const riskyDates = countRiskyMealDates();
     items.push(
-      ['카드 이용', `${state.cardRecords.length}건`],
-      ['카드 합계', `${moneyFormat(cardTotal)}원`],
-      ['식비 후보', `${mealCards.length}건`],
-      ['후보 금액', `${moneyFormat(mealTotal)}원`],
-      ['주의 일자', `${riskyDates}일`],
+      { label: '카드 이용', value: `${state.cardRecords.length}건` },
+      { label: '카드 합계', value: `${moneyFormat(cardTotal)}원` },
+      { label: '식비 후보', value: `${mealCards.length}건`, tone: 'meal' },
+      { label: '후보 금액', value: `${moneyFormat(mealTotal)}원`, tone: 'meal' },
+      { label: '주의 일자', value: `${riskyDates}일`, tone: riskyDates ? 'alert' : '' },
     );
   }
 
-  summaryGrid.innerHTML = items.map(([label, value]) => `
-    <div class="summary-item">
+  summaryGrid.innerHTML = items.map(({ label, value, tone = '' }) => `
+    <div class="summary-item ${tone ? `summary-${tone}` : ''}">
       <span>${label}</span>
       <strong>${value}</strong>
     </div>
@@ -669,6 +669,14 @@ function getMealStatus(workedCount, mealTotal) {
   if (workedCount === 0) return { className: 'danger', label: '근거없음' };
   if (mealTotal > possible) return { className: 'warn', label: '기준초과' };
   return { className: 'ok', label: '지급기준 충족' };
+}
+
+function getMealShortLabel(status) {
+  if (!status?.label) return '';
+  if (status.label === '지급기준 충족') return '충족';
+  if (status.label === '기준초과') return '초과';
+  if (status.label === '근거없음') return '근거없음';
+  return status.label;
 }
 
 function getMealJudgementText(status) {
@@ -718,12 +726,14 @@ function renderCalendar() {
         <span>${escapeHtml(r.actualTotal)}</span>
       </div>
     `).join('');
-    const more = dayRecords.length > 3 ? `<div class="more-text">외 ${dayRecords.length - 3}명</div>` : '';
+    const more = dayRecords.length > 3 ? `<div class="more-text">+${dayRecords.length - 3}명</div>` : '';
     const cardLine = mealCards.length ? `
       <div class="card-line ${mealStatus.className}" aria-label="식비후보 ${mealCards.length}건 ${moneyFormat(mealTotal)}원 ${mealStatus.label}">
-        <span class="meal-label">식비후보</span>
-        <strong class="meal-amount">${moneyFormat(mealTotal)}원</strong>
-        <em class="meal-meta">${mealCards.length}건 · ${mealStatus.label}</em>
+        <div class="meal-main">
+          <span class="meal-label">식비</span>
+          <strong class="meal-amount">${moneyFormat(mealTotal)}원</strong>
+        </div>
+        <em class="meal-status">${escapeHtml(getMealShortLabel(mealStatus))}</em>
       </div>
     ` : '';
 

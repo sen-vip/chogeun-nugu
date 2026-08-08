@@ -1761,3 +1761,202 @@ button,
     scroll-margin-top: 66px;
   }
 }
+
+
+/* v0.3.13 — 정보 밀도 다이어트: 요약은 압축하고 캘린더를 주인공으로 */
+.summary-grid {
+  margin-top: 14px;
+  gap: 10px;
+}
+
+.summary-item {
+  min-height: 72px;
+  border-radius: 15px;
+  padding: 11px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.summary-item span {
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.summary-item strong {
+  margin-top: 5px;
+  font-size: 23px;
+  line-height: 1.05;
+}
+
+.summary-item.summary-meal {
+  background: linear-gradient(180deg, #ffffff, #f7fbf9);
+}
+
+.summary-item.summary-alert {
+  background: linear-gradient(180deg, #fffdfa, #fff8ea);
+  border-color: #f2d79b;
+}
+
+.summary-item.summary-alert strong {
+  color: #a46300;
+}
+
+.toolbar {
+  margin-top: 16px;
+}
+
+.content-grid {
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 14px;
+}
+
+.calendar-grid {
+  gap: 6px;
+  padding: 0 12px 12px;
+}
+
+.calendar-head {
+  padding: 12px 12px 7px;
+}
+
+.day-cell {
+  min-height: 126px;
+  border-radius: 15px;
+  padding: 9px;
+  gap: 6px;
+}
+
+.day-count {
+  padding: 3px 7px;
+  font-size: 11px;
+}
+
+.person-list {
+  gap: 4px;
+}
+
+.person-chip {
+  padding: 4px 6px;
+  border-radius: 9px;
+  font-size: 11.5px;
+}
+
+.more-text {
+  padding-left: 4px;
+  font-size: 11px;
+  color: #66758c;
+}
+
+.card-line {
+  margin-top: auto;
+  min-height: 30px;
+  padding: 5px 6px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  line-height: 1;
+}
+
+.card-line .meal-main {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.card-line .meal-label {
+  flex: 0 0 auto;
+  padding: 2px 5px;
+  font-size: 10px;
+}
+
+.card-line .meal-amount {
+  min-width: 0;
+  font-size: 12px;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.card-line .meal-status {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .72);
+  color: inherit;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.card-line .meal-meta {
+  display: none;
+}
+
+.detail-card {
+  padding: 18px;
+}
+
+@media (max-width: 1080px) {
+  .content-grid {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 12px;
+  }
+
+  .day-cell {
+    padding: 7px;
+  }
+
+  .person-chip {
+    font-size: 11px;
+  }
+
+  .card-line .meal-label {
+    display: none;
+  }
+}
+
+@media (max-width: 940px) {
+  .summary-item {
+    min-height: 68px;
+    padding: 10px 12px;
+  }
+
+  .summary-item strong {
+    font-size: 21px;
+  }
+
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .summary-item {
+    min-height: 64px;
+  }
+
+  .summary-item strong {
+    font-size: 20px;
+  }
+
+  .card-line {
+    padding: 4px 5px;
+  }
+
+  .card-line .meal-status {
+    padding-inline: 5px;
+  }
+}
