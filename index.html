@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>초근 누구 v0.3.10</title>
+  <title>초근 누구 v0.3.11</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="shortcut icon" type="image/svg+xml" href="favicon.svg" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=0.3.11" />
 </head>
 <body>
   <nav class="topbar" aria-label="초근 누구 상단바">
@@ -17,7 +17,7 @@
       <div class="topbar-actions">
         <a href="#helpSection">도움말</a>
         <a href="https://github.com/sen-vip/chogeun-nugu" target="_blank" rel="noopener">GitHub</a>
-        <em>v0.3.10</em>
+        <em>v0.3.11</em>
       </div>
     </div>
   </nav>
@@ -30,8 +30,8 @@
         <p class="hero-desc">NEIS 초과근무 최종자료를 캘린더로 정리해 특근매식비 검토를 도와줍니다.</p>
       </div>
       <div class="hero-card">
-        <strong>v0.3.10</strong>
-        <span>NEIS 승인상태 열 자동 인식</span>
+        <strong>v0.3.11</strong>
+        <span>NEIS 결재상태 열 인식 오류 수정</span>
       </div>
 </header>
 
@@ -113,7 +113,7 @@
       <div class="tool-group filters">
         <input type="search" id="nameSearch" placeholder="성명 검색" />
         <select id="approvalFilter">
-          <option value="all">승인상태 전체</option>
+          <option value="all">결재상태 전체</option>
         </select>
         <label class="switch-label">
           <input type="checkbox" id="showZero" />
@@ -174,7 +174,7 @@
               <th>실제 시작</th>
               <th>실제 종료</th>
               <th>실제 시간합</th>
-              <th>승인상태</th>
+              <th>결재상태</th>
               <th>저녁공제</th>
             </tr>
           </thead>
@@ -218,6 +218,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=0.3.11"></script>
 </body>
 </html>

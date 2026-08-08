@@ -226,14 +226,21 @@ function rowsFromWorkbook(workbook) {
   return XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
 }
 
+function isApprovalStatusHeader(header) {
+  return (header.includes('승인') || header.includes('결재')) && header.includes('상태');
+}
+
 function findOvertimeHeaderIndex(rows) {
   return rows.findIndex(row => {
     const headers = row.map(normalizeHeader);
     const hasName = headers.some(header => header === '성명');
     const hasDate = headers.some(header => header.includes('초과근무') && header.includes('일자'));
-    const hasActualTotal = headers.some(header => header.includes('실제초과') && header.includes('시간합'));
-    const hasApproval = headers.some(header => header.includes('승인') && header.includes('상태'));
-    return hasName && hasDate && hasActualTotal && hasApproval;
+    const hasActualTotal = headers.some(header =>
+      (header.includes('실제초과') || header.includes('실제')) && header.includes('시간합')
+    );
+    // NEIS 파일에 따라 '승인상태'가 아니라 '결재상태'로 내려오는 경우가 있으므로
+    // 상태 열 존재 여부와 무관하게 핵심 열만으로 헤더 행을 찾는다.
+    return hasName && hasDate && hasActualTotal;
   });
 }
 
@@ -243,6 +250,7 @@ function getOvertimeColumns(headerRow) {
     const index = headers.findIndex(header => tests.some(test => test(header)));
     return index >= 0 ? index : fallback;
   };
+  const pickOptional = (tests) => headers.findIndex(header => tests.some(test => test(header)));
 
   return {
     ...COL,
@@ -251,14 +259,30 @@ function getOvertimeColumns(headerRow) {
     position: pick([h => h === '직위' || h.includes('직위')], COL.position),
     name: pick([h => h === '성명'], COL.name),
     date: pick([h => h.includes('초과근무') && h.includes('일자')], COL.date),
-    type: pick([h => h.includes('근무') && h.includes('유형')], COL.type),
-    requestStatus: pick([h => h.includes('신청') && h.includes('상태')], COL.requestStatus),
-    approvalStatus: pick([h => h.includes('승인') && h.includes('상태')], COL.approvalStatus),
-    holidayRequest: pick([h => h.includes('휴일') && h.includes('신청')], COL.holidayRequest),
-    flexibleRequest: pick([h => (h.includes('유연') || h.includes('탄력')) && h.includes('신청')], COL.flexibleRequest),
-    dinnerDeduct: pick([h => (h.includes('저녁') || h.includes('석식')) && (h.includes('공제') || h.includes('차감'))], COL.dinnerDeduct),
-    substituteHoliday: pick([h => (h.includes('대체') || h.includes('보상')) && (h.includes('휴무') || h.includes('휴일'))], COL.substituteHoliday),
+    type: pick([h => h.includes('근무') && (h.includes('유형') || h.includes('종별'))], COL.type),
+    personalStart: pick([h => h.includes('개인') && h.includes('시작')], COL.personalStart),
+    personalEnd: pick([h => h.includes('개인') && (h.includes('종료') || h.includes('끝'))], COL.personalEnd),
+    requestStart: pick([h => h.includes('신청') && h.includes('시작')], COL.requestStart),
+    requestEnd: pick([h => h.includes('신청') && (h.includes('종료') || h.includes('끝'))], COL.requestEnd),
+    requestTotal: pick([h => h.includes('신청') && h.includes('시간합')], COL.requestTotal),
+    actualStart: pick([h => h.includes('실제') && h.includes('시작')], COL.actualStart),
+    actualEnd: pick([h => h.includes('실제') && (h.includes('종료') || h.includes('끝'))], COL.actualEnd),
+    afterClassDeduct: pick([h => h.includes('방과후') && (h.includes('차감') || h.includes('공제'))], COL.afterClassDeduct),
+    actualTotal: pick([h => (h.includes('실제초과') || h.includes('실제')) && h.includes('시간합')], COL.actualTotal),
+
+    // 상태/선택형 열은 못 찾았을 때 예전 고정 열번호로 돌아가지 않는다.
+    // 잘못된 열의 텍스트(예: '사김')가 배지로 표시되는 것을 막는다.
+    requestStatus: pickOptional([h => h.includes('신청') && h.includes('상태')]),
+    approvalStatus: pickOptional([h => isApprovalStatusHeader(h)]),
+    holidayRequest: pickOptional([h => h.includes('휴일') && h.includes('신청')]),
+    flexibleRequest: pickOptional([h => (h.includes('유연') || h.includes('탄력')) && h.includes('신청')]),
+    dinnerDeduct: pickOptional([h => (h.includes('저녁') || h.includes('석식')) && (h.includes('공제') || h.includes('차감'))]),
+    substituteHoliday: pickOptional([h => (h.includes('대체') || h.includes('보상')) && (h.includes('휴무') || h.includes('휴일'))]),
   };
+}
+
+function readCell(row, index) {
+  return index >= 0 ? String(row[index] || '').trim() : '';
 }
 
 function decodeTextBuffer(buffer) {
@@ -344,29 +368,29 @@ function parseWorkbook(workbook) {
       const name = sanitizeName(rawName);
       return {
         id: `${date}-${rawName || name}-${index}`,
-        seq: String(row[columns.seq] || '').trim(),
-        dept: String(row[columns.dept] || '').trim(),
-        position: String(row[columns.position] || '').trim(),
+        seq: readCell(row, columns.seq),
+        dept: readCell(row, columns.dept),
+        position: readCell(row, columns.position),
         name,
         rawName,
         date,
-        type: String(row[columns.type] || '').trim(),
-        personalStart: String(row[columns.personalStart] || '').trim(),
-        personalEnd: String(row[columns.personalEnd] || '').trim(),
-        requestStart: String(row[columns.requestStart] || '').trim(),
-        requestEnd: String(row[columns.requestEnd] || '').trim(),
-        requestTotal: String(row[columns.requestTotal] || '').trim(),
-        actualStart: String(row[columns.actualStart] || '').trim(),
-        actualEnd: String(row[columns.actualEnd] || '').trim(),
-        afterClassDeduct: String(row[columns.afterClassDeduct] || '').trim(),
-        actualTotal: String(row[columns.actualTotal] || '').trim() || '00:00',
+        type: readCell(row, columns.type),
+        personalStart: readCell(row, columns.personalStart),
+        personalEnd: readCell(row, columns.personalEnd),
+        requestStart: readCell(row, columns.requestStart),
+        requestEnd: readCell(row, columns.requestEnd),
+        requestTotal: readCell(row, columns.requestTotal),
+        actualStart: readCell(row, columns.actualStart),
+        actualEnd: readCell(row, columns.actualEnd),
+        afterClassDeduct: readCell(row, columns.afterClassDeduct),
+        actualTotal: readCell(row, columns.actualTotal) || '00:00',
         actualMinutes,
-        requestStatus: String(row[columns.requestStatus] || '').trim(),
-        approvalStatus: String(row[columns.approvalStatus] || '').trim(),
-        holidayRequest: String(row[columns.holidayRequest] || '').trim(),
-        flexibleRequest: String(row[columns.flexibleRequest] || '').trim(),
-        dinnerDeduct: String(row[columns.dinnerDeduct] || '').trim(),
-        substituteHoliday: String(row[columns.substituteHoliday] || '').trim(),
+        requestStatus: readCell(row, columns.requestStatus),
+        approvalStatus: readCell(row, columns.approvalStatus),
+        holidayRequest: readCell(row, columns.holidayRequest),
+        flexibleRequest: readCell(row, columns.flexibleRequest),
+        dinnerDeduct: readCell(row, columns.dinnerDeduct),
+        substituteHoliday: readCell(row, columns.substituteHoliday),
       };
     })
     .filter(record => record.name && record.date);
@@ -603,7 +627,7 @@ function countRiskyMealDates() {
 
 function renderApprovalOptions() {
   const values = Array.from(new Set(state.records.map(r => r.approvalStatus).filter(Boolean))).sort();
-  approvalFilter.innerHTML = '<option value="all">승인상태 전체</option>' +
+  approvalFilter.innerHTML = '<option value="all">결재상태 전체</option>' +
     values.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
 }
 
@@ -888,7 +912,7 @@ function copyFilteredText() {
     .sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name, 'ko'))
     .map(r => `${dateLabel(r.date)}\t${displayName(r.name)}\t${r.actualStart || '-'}~${r.actualEnd || '-'}\t${r.actualTotal}\t${r.approvalStatus || '-'}`);
   if (!lines.length) return showToast('복사할 자료가 없어요.');
-  navigator.clipboard.writeText(['일자\t성명\t실제시간\t시간합\t승인상태', ...lines].join('\n'))
+  navigator.clipboard.writeText(['일자\t성명\t실제시간\t시간합\t결재상태', ...lines].join('\n'))
     .then(() => showToast('표 내용을 복사했어요.'));
 }
 
@@ -1024,7 +1048,7 @@ function resetApp() {
   fileInput.value = '';
   cardFileInput.value = '';
   nameSearch.value = '';
-  approvalFilter.innerHTML = '<option value="all">승인상태 전체</option>';
+  approvalFilter.innerHTML = '<option value="all">결재상태 전체</option>';
   showZero.checked = false;
   showAllCards.checked = false;
   statusCard.classList.add('hidden');
