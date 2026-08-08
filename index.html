@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>초근 누구 v0.3.13</title>
+  <title>초근 누구 v0.3.14</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="shortcut icon" type="image/svg+xml" href="favicon.svg" />
-  <link rel="stylesheet" href="style.css?v=0.3.13" />
+  <link rel="stylesheet" href="style.css?v=0.3.14" />
 </head>
 <body>
   <nav class="topbar" aria-label="초근 누구 상단바">
@@ -15,9 +15,9 @@
         <strong>초근 누구</strong>
       </div>
       <div class="topbar-actions">
-        <a href="#helpSection">도움말</a>
+        <button type="button" class="topbar-help" id="helpOpenBtn" aria-haspopup="dialog" aria-controls="helpModal">도움말</button>
         <a href="https://github.com/sen-vip/chogeun-nugu" target="_blank" rel="noopener">GitHub</a>
-        <em>v0.3.13</em>
+        <em>v0.3.14</em>
       </div>
     </div>
   </nav>
@@ -30,19 +30,10 @@
         <p class="hero-desc">NEIS 초과근무 최종자료를 캘린더로 정리해 특근매식비 검토를 도와줍니다.</p>
       </div>
       <div class="hero-card">
-        <strong>v0.3.13</strong>
-        <span>대시보드 압축 · 캘린더 가독성 개선</span>
+        <strong>v0.3.14</strong>
+        <span>도움말 모달 · 사용안내 정리</span>
       </div>
 </header>
-
-    <section class="guide-panel" id="helpSection" aria-label="사용안내">
-      <div class="guide-actions" role="tablist" aria-label="도움말 선택">
-        <button type="button" class="guide-btn" data-guide="how">사용방법</button>
-        <button type="button" class="guide-btn" data-guide="source">자료 받는 법</button>
-        <button type="button" class="guide-btn" data-guide="privacy">개인정보 안내</button>
-      </div>
-      <div class="guide-box hidden" id="guideBox" aria-live="polite"></div>
-    </section>
 
     <section class="upload-stack">
       <section class="upload-panel" id="dropZone">
@@ -214,10 +205,84 @@
     </footer>
   </div>
 
+
+  <div class="help-modal hidden" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle">
+    <div class="help-modal-backdrop" data-help-close></div>
+    <section class="help-modal-panel" tabindex="-1">
+      <header class="help-modal-head">
+        <div>
+          <p class="help-kicker">초근 누구 사용안내</p>
+          <h2 id="helpModalTitle">도움말</h2>
+        </div>
+        <button type="button" class="help-close" id="helpCloseBtn" aria-label="도움말 닫기">×</button>
+      </header>
+
+      <div class="help-quickflow" aria-label="빠른 사용 순서">
+        <strong>파일 1개 넣고</strong><span>→</span><strong>달력에서 날짜 확인</strong><span>→</span><strong>필요하면 카드자료까지 비교</strong>
+      </div>
+
+      <p class="help-intro">NEIS 초과근무 최종자료를 날짜별로 정리하고, 필요하면 BC카드 사용내역과 함께 특근매식비 검토를 도와주는 확인 보조 도구입니다.</p>
+
+      <div class="help-accordion">
+        <details open>
+          <summary>사용방법</summary>
+          <div class="help-detail-body">
+            <ol>
+              <li><strong>NEIS 초과근무 자료</strong>를 업로드합니다. 나이스에서 내려받은 초과근무확인 엑셀 또는 CSV를 사용할 수 있습니다.</li>
+              <li><strong>월간 달력</strong>에서 날짜별 초근자 수와 실제 초과근무시간을 확인합니다.</li>
+              <li>날짜를 누르면 오른쪽 상세영역에서 해당일 초근자와 실제 근무시간을 확인할 수 있습니다.</li>
+              <li>필요한 경우 <strong>BC카드 승인내역 또는 이용내역</strong>을 추가해 식비 후보금액을 함께 비교합니다.</li>
+            </ol>
+            <p class="help-tip">카드 자료 없이 초과근무 자료만 업로드해도 사용할 수 있습니다.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>식비 판정</summary>
+          <div class="help-detail-body">
+            <p><strong>식비후보</strong>는 카드 사용내역 중 특근매식비로 확인해볼 필요가 있는 사용건을 후보로 보여주는 기능입니다.</p>
+            <p><strong>매식 가능액 = 실제 초근 인원 × 1인 기준금액</strong>으로 계산합니다. 기본 기준금액은 9,000원이며 화면에서 변경할 수 있습니다.</p>
+            <div class="help-status-grid">
+              <div><span class="help-status ok">충족</span><p>식비 후보금액이 초근 인원 기준 가능액 이내</p></div>
+              <div><span class="help-status warn">초과</span><p>식비 후보금액이 기준 가능액을 초과</p></div>
+              <div><span class="help-status danger">근거없음</span><p>식비 후보는 있으나 해당 날짜에 실제 초근자가 없음</p></div>
+            </div>
+            <p class="help-warning"><strong>중요:</strong> ‘충족’은 지급 가능 여부를 최종 확정한다는 뜻이 아닙니다. 실제 대상자, 사용 목적, 원인행위 및 증빙자료를 별도로 확인해 주세요.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>화면 보는 법</summary>
+          <div class="help-detail-body">
+            <p>월간 달력은 날짜별 현황을 빠르게 찾기 위한 화면입니다. 초근자가 많은 날에는 일부 이름만 표시하고 나머지는 <strong>+N명</strong>으로 정리합니다. 전체 내역은 날짜를 클릭해 오른쪽 상세영역에서 확인하세요.</p>
+            <dl class="help-metrics">
+              <div><dt>전체 건수</dt><dd>업로드한 초과근무 자료 건수</dd></div>
+              <div><dt>실제 초근</dt><dd>실제 초과근무시간이 있는 건수</dd></div>
+              <div><dt>초근 일수</dt><dd>초근 기록이 있는 날짜 수</dd></div>
+              <div><dt>초근 인원</dt><dd>중복을 제외한 초근자 수</dd></div>
+              <div><dt>매식 가능액</dt><dd>실제 초근 인원을 기준으로 계산한 금액</dd></div>
+              <div><dt>식비 후보 / 후보 금액</dt><dd>카드 자료에서 검토 대상으로 분류된 건수와 금액</dd></div>
+              <div><dt>주의 일자</dt><dd>기준초과 또는 근거없음 등 추가 확인이 필요한 날짜</dd></div>
+            </dl>
+          </div>
+        </details>
+
+        <details>
+          <summary>개인정보</summary>
+          <div class="help-detail-body">
+            <p><strong>업로드한 파일은 서버로 전송되지 않고 현재 브라우저 안에서만 분석됩니다.</strong></p>
+            <p>페이지를 새로 열어 사용할 때 다시 필요한 파일을 업로드하는 방식입니다. 실제 업무자료를 다루는 만큼 공용 PC에서는 사용 후 화면과 다운로드 파일을 확인하고 브라우저를 닫아주세요.</p>
+            <p class="help-tip">초근 누구는 자료를 보기 쉽게 정리하는 확인 보조 도구입니다. 최종 인정 여부는 기관 기준과 증빙자료를 함께 확인해 주세요.</p>
+          </div>
+        </details>
+      </div>
+    </section>
+  </div>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="app.js?v=0.3.13"></script>
+  <script src="app.js?v=0.3.14"></script>
 </body>
 </html>

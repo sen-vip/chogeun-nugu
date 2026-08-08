@@ -95,7 +95,10 @@ const cardTableBody = $('#cardTableBody');
 const toast = $('#toast');
 const mealLimitInput = $('#mealLimitInput');
 const maskNames = $('#maskNames');
-const guideBox = $('#guideBox');
+const helpModal = $('#helpModal');
+const helpOpenBtn = $('#helpOpenBtn');
+const helpCloseBtn = $('#helpCloseBtn');
+let helpReturnFocus = null;
 
 function showToast(message) {
   toast.textContent = message;
@@ -1126,46 +1129,28 @@ function bindDrop(zone, handler) {
 }
 
 
-const GUIDE_CONTENT = {
-  how: `
-    <h2>사용방법</h2>
-    <ol>
-      <li>NEIS 초과근무 최종자료 엑셀 또는 CSV를 업로드합니다.</li>
-      <li>날짜별 초과근무자를 캘린더에서 확인합니다.</li>
-      <li>필요 시 BC카드 승인내역 또는 이용내역을 추가합니다.</li>
-      <li>식비 후보금액과 초근자 수를 함께 확인합니다.</li>
-    </ol>
-  `,
-  source: `
-    <h2>자료 받는 법</h2>
-    <ul>
-      <li><strong>NEIS 초과근무 최종자료</strong>: 나이스 접속 → 급여 → 복무 → 초과근무관리 → 초과근무확인 → 해당 월 조회 → 엑셀 또는 CSV 내려받기</li>
-      <li><strong>BC카드 자료</strong>: BC카드 홈페이지 → 승인내역조회 또는 이용내역조회 → 해당 월 조회 → 엑셀 다운로드</li>
-    </ul>
-    <div class="guide-note">승인내역조회와 이용내역조회 엑셀을 모두 지원합니다. ZIP 안 엑셀도 사용할 수 있고, 승인내역의 취소 건은 승인번호 기준 순액으로 정리합니다.</div>
-  `,
-  privacy: `
-    <h2>개인정보 안내</h2>
-    <p>업로드한 파일은 서버로 전송되지 않고, 현재 브라우저 안에서만 분석됩니다.</p>
-    <p>NEIS 초과근무 최종자료와 카드 이용내역은 저장되지 않습니다.</p>
-    <div class="guide-note">이 도구는 자료를 보기 쉽게 정리하는 확인 보조 도구입니다. 최종 인정 여부는 기관 기준과 증빙자료를 함께 확인해 주세요.</div>
-  `,
-};
+function openHelpModal() {
+  if (!helpModal) return;
+  helpReturnFocus = document.activeElement;
+  helpModal.classList.remove('hidden');
+  document.body.classList.add('modal-open');
+  requestAnimationFrame(() => {
+    const panel = helpModal.querySelector('.help-modal-panel');
+    if (panel) panel.focus();
+  });
+}
 
-function toggleGuide(kind) {
-  if (!guideBox) return;
-  const alreadyOpen = !guideBox.classList.contains('hidden') && guideBox.dataset.kind === kind;
-  $$('.guide-btn').forEach(btn => btn.classList.remove('active'));
-  if (alreadyOpen) {
-    guideBox.classList.add('hidden');
-    guideBox.dataset.kind = '';
-    return;
+function closeHelpModal() {
+  if (!helpModal || helpModal.classList.contains('hidden')) return;
+  helpModal.classList.add('hidden');
+  document.body.classList.remove('modal-open');
+  if (helpReturnFocus && typeof helpReturnFocus.focus === 'function') helpReturnFocus.focus();
+}
+
+function handleHelpKeydown(event) {
+  if (event.key === 'Escape' && helpModal && !helpModal.classList.contains('hidden')) {
+    closeHelpModal();
   }
-  guideBox.innerHTML = GUIDE_CONTENT[kind] || '';
-  guideBox.dataset.kind = kind;
-  guideBox.classList.remove('hidden');
-  const activeBtn = document.querySelector(`.guide-btn[data-guide="${kind}"]`);
-  if (activeBtn) activeBtn.classList.add('active');
 }
 
 fileInput.addEventListener('change', (event) => handleFile(event.target.files[0]));
@@ -1179,7 +1164,10 @@ showAllCards.addEventListener('change', renderDetail);
 mealLimitInput.addEventListener('input', () => syncMealLimitFromInput());
 mealLimitInput.addEventListener('blur', () => syncMealLimitFromInput({ format: true }));
 maskNames.addEventListener('change', () => { state.maskNames = maskNames.checked; renderAll(); });
-$$('.guide-btn').forEach(btn => btn.addEventListener('click', () => toggleGuide(btn.dataset.guide)));
+helpOpenBtn?.addEventListener('click', openHelpModal);
+helpCloseBtn?.addEventListener('click', closeHelpModal);
+helpModal?.querySelectorAll('[data-help-close]').forEach(el => el.addEventListener('click', closeHelpModal));
+document.addEventListener('keydown', handleHelpKeydown);
 $('#copyFilteredBtn').addEventListener('click', copyFilteredText);
 $('#copyCardBtn').addEventListener('click', copyCardText);
 
