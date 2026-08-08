@@ -22,6 +22,19 @@ const COL = {
   substituteHoliday: 21,
 };
 
+// 헤더 행을 찾지 못한 구형/변형 NEIS 파일용 안전한 고정열 매핑.
+// 핵심 시간/성명 열만 기존 위치를 사용하고, 상태·선택형 열은 절대 추정하지 않는다.
+// 잘못된 17번째 열 값이 결재상태 배지로 노출되는 문제(예: '사김')를 방지한다.
+const SAFE_LEGACY_COL = {
+  ...COL,
+  requestStatus: -1,
+  approvalStatus: -1,
+  holidayRequest: -1,
+  flexibleRequest: -1,
+  dinnerDeduct: -1,
+  substituteHoliday: -1,
+};
+
 const DEFAULT_MEAL_LIMIT = 9000;
 
 const EXCLUDE_KEYWORDS = [
@@ -230,6 +243,16 @@ function isApprovalStatusHeader(header) {
   return (header.includes('승인') || header.includes('결재')) && header.includes('상태');
 }
 
+function sanitizeApprovalStatus(value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+
+  // 결재상태로 볼 수 있는 대표 표현만 허용한다.
+  // 이름/직급/기타 열의 우연한 문자열이 배지로 노출되지 않도록 하는 2차 안전장치다.
+  const validKeywords = ['승인', '결재', '완료', '반려', '기각', '대기', '진행', '상신', '취소', '사후', '사전'];
+  return validKeywords.some(keyword => text.includes(keyword)) ? text : '';
+}
+
 function findOvertimeHeaderIndex(rows) {
   return rows.findIndex(row => {
     const headers = row.map(normalizeHeader);
@@ -357,7 +380,7 @@ function workbookFromCsvBuffer(buffer) {
 function parseWorkbook(workbook) {
   const rows = rowsFromWorkbook(workbook);
   const headerIndex = findOvertimeHeaderIndex(rows);
-  const columns = headerIndex >= 0 ? getOvertimeColumns(rows[headerIndex]) : COL;
+  const columns = headerIndex >= 0 ? getOvertimeColumns(rows[headerIndex]) : SAFE_LEGACY_COL;
   const dataRows = headerIndex >= 0 ? rows.slice(headerIndex + 1) : rows.slice(2);
 
   return dataRows
@@ -386,7 +409,7 @@ function parseWorkbook(workbook) {
         actualTotal: readCell(row, columns.actualTotal) || '00:00',
         actualMinutes,
         requestStatus: readCell(row, columns.requestStatus),
-        approvalStatus: readCell(row, columns.approvalStatus),
+        approvalStatus: sanitizeApprovalStatus(readCell(row, columns.approvalStatus)),
         holidayRequest: readCell(row, columns.holidayRequest),
         flexibleRequest: readCell(row, columns.flexibleRequest),
         dinnerDeduct: readCell(row, columns.dinnerDeduct),
