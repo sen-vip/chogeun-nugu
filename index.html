@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>초근 누구 v0.3.14</title>
+  <title>초근 누구 v0.3.15</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="shortcut icon" type="image/svg+xml" href="favicon.svg" />
-  <link rel="stylesheet" href="style.css?v=0.3.14" />
+  <link rel="stylesheet" href="style.css?v=0.3.15" />
 </head>
 <body>
   <nav class="topbar" aria-label="초근 누구 상단바">
@@ -17,7 +17,7 @@
       <div class="topbar-actions">
         <button type="button" class="topbar-help" id="helpOpenBtn" aria-haspopup="dialog" aria-controls="helpModal">도움말</button>
         <a href="https://github.com/sen-vip/chogeun-nugu" target="_blank" rel="noopener">GitHub</a>
-        <em>v0.3.14</em>
+        <em>v0.3.15</em>
       </div>
     </div>
   </nav>
@@ -29,9 +29,15 @@
         <h1>초근 누구</h1>
         <p class="hero-desc">NEIS 초과근무 최종자료를 캘린더로 정리해 특근매식비 검토를 도와줍니다.</p>
       </div>
-      <div class="hero-card">
-        <strong>v0.3.14</strong>
-        <span>도움말 모달 · 사용안내 정리</span>
+      <div class="hero-card hero-flow" aria-label="빠른 사용 순서">
+        <span class="hero-flow-kicker">빠른 사용</span>
+        <div class="hero-flow-steps">
+          <span><b>1</b> 초근자료</span>
+          <i>→</i>
+          <span><b>2</b> 카드자료 <small>선택</small></span>
+          <i>→</i>
+          <span><b>3</b> 달력 확인</span>
+        </div>
       </div>
 </header>
 
@@ -54,8 +60,8 @@
         <div class="upload-copy">
           <span class="upload-icon">💳</span>
           <div>
-            <h2>2. BC카드 승인내역/이용내역 선택 업로드</h2>
-            <p>BC카드 승인내역 또는 이용내역 엑셀을 넣어주세요. ZIP 파일도 사용할 수 있고, 파일 형식은 자동으로 판별합니다.</p>
+            <h2>2. BC카드 자료 <span class="optional-badge">선택</span></h2>
+            <p>승인내역 또는 이용내역 엑셀을 넣으면 날짜별 식비 후보를 함께 비교합니다. ZIP도 사용할 수 있습니다.</p>
           </div>
         </div>
         <label class="upload-button secondary">
@@ -283,6 +289,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="app.js?v=0.3.14"></script>
+  <script src="app.js?v=0.3.15"></script>
 </body>
 </html>

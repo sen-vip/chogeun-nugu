@@ -2272,3 +2272,240 @@ body.modal-open {
     gap: 3px;
   }
 }
+
+
+/* v0.3.15 — 달력 겹침 해소 + 메인 진입화면 압축 */
+.hero {
+  padding: 28px 30px;
+  min-height: 150px;
+  align-items: center;
+}
+
+.hero-copy h1 {
+  font-size: clamp(44px, 5vw, 58px);
+  line-height: .96;
+}
+
+.hero-desc {
+  margin-top: 14px;
+  font-size: 15px;
+}
+
+.hero-card.hero-flow {
+  width: auto;
+  min-width: 360px;
+  max-width: 430px;
+  padding: 17px 19px;
+  background: linear-gradient(135deg, #294675, #36578d);
+}
+
+.hero-flow-kicker {
+  margin: 0 0 9px !important;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .02em;
+  opacity: .76 !important;
+}
+
+.hero-flow-steps {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.hero-flow-steps > span {
+  margin: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 850;
+  opacity: 1 !important;
+}
+
+.hero-flow-steps b {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.16);
+  font-size: 11px;
+}
+
+.hero-flow-steps i {
+  font-style: normal;
+  opacity: .55;
+}
+
+.hero-flow-steps small {
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.13);
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.upload-stack {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.upload-panel {
+  min-height: 142px;
+  padding: 18px 20px;
+  border-radius: 18px;
+  align-items: center;
+}
+
+.upload-copy {
+  gap: 13px;
+  min-width: 0;
+}
+
+.upload-icon {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 13px;
+  font-size: 21px;
+}
+
+.upload-copy h2 {
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.upload-copy p {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.48;
+}
+
+.upload-button {
+  flex: 0 0 auto;
+  padding: 10px 13px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.optional-badge {
+  display: inline-flex;
+  vertical-align: 2px;
+  margin-left: 4px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #eaf6f0;
+  color: #277357;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.settings-strip {
+  margin-top: 10px;
+}
+
+/* 달력 하단 식비표시: 금액과 상태를 가로로 우겨넣지 않는다. */
+.card-line {
+  min-height: 42px;
+  padding: 5px 7px 6px;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 3px;
+  overflow: hidden;
+}
+
+.card-line .meal-main {
+  width: 100%;
+  min-width: 0;
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.card-line .meal-label {
+  flex: 0 0 auto;
+}
+
+.card-line .meal-amount {
+  min-width: 0;
+  max-width: 100%;
+  font-size: 11.5px;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-line .meal-status {
+  align-self: flex-start;
+  min-height: 16px;
+  padding: 1px 5px;
+  font-size: 9px;
+  line-height: 1.2;
+}
+
+.day-cell {
+  min-width: 0;
+}
+
+.person-chip {
+  min-width: 0;
+}
+
+.person-chip strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 1180px) {
+  .upload-panel {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .upload-button { align-self: flex-end; }
+  .hero-card.hero-flow { min-width: 330px; }
+}
+
+@media (max-width: 940px) {
+  .hero-card.hero-flow {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+  .upload-stack {
+    grid-template-columns: 1fr;
+  }
+  .upload-panel {
+    min-height: auto;
+    flex-direction: row;
+    align-items: center;
+  }
+  .card-line .meal-label { display: inline-flex; }
+}
+
+@media (max-width: 620px) {
+  .hero { padding: 22px; min-height: auto; }
+  .hero-copy h1 { font-size: 42px; }
+  .hero-flow-steps {
+    white-space: normal;
+    flex-wrap: wrap;
+  }
+  .hero-flow-steps i { display: none; }
+  .upload-panel {
+    padding: 15px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .upload-button { align-self: stretch; justify-content: center; }
+  .card-line {
+    min-height: 36px;
+    padding: 4px 5px;
+  }
+  .card-line .meal-label { display: none; }
+  .card-line .meal-amount { font-size: 10.5px; }
+}
