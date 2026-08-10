@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>초근 누구 v0.3.15</title>
+  <title>초근 누구 v0.3.16</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="shortcut icon" type="image/svg+xml" href="favicon.svg" />
-  <link rel="stylesheet" href="style.css?v=0.3.15" />
+  <link rel="stylesheet" href="style.css?v=0.3.16" />
 </head>
 <body>
   <nav class="topbar" aria-label="초근 누구 상단바">
@@ -17,7 +17,7 @@
       <div class="topbar-actions">
         <button type="button" class="topbar-help" id="helpOpenBtn" aria-haspopup="dialog" aria-controls="helpModal">도움말</button>
         <a href="https://github.com/sen-vip/chogeun-nugu" target="_blank" rel="noopener">GitHub</a>
-        <em>v0.3.15</em>
+        <em>v0.3.16</em>
       </div>
     </div>
   </nav>
@@ -27,76 +27,112 @@
       <div class="hero-copy">
         <p class="eyebrow">학돌랩 · 초과근무 확인 도구</p>
         <h1>초근 누구</h1>
-        <p class="hero-desc">NEIS 초과근무 최종자료를 캘린더로 정리해 특근매식비 검토를 도와줍니다.</p>
+        <p class="hero-desc">NEIS 초과근무 자료와 카드 이용내역을 비교해 특근매식비 검토를 도와드립니다.</p>
       </div>
-      <div class="hero-card hero-flow" aria-label="빠른 사용 순서">
-        <span class="hero-flow-kicker">빠른 사용</span>
-        <div class="hero-flow-steps">
-          <span><b>1</b> 초근자료</span>
-          <i>→</i>
-          <span><b>2</b> 카드자료 <small>선택</small></span>
-          <i>→</i>
-          <span><b>3</b> 달력 확인</span>
-        </div>
+      <div class="hero-version" aria-label="현재 버전">
+        <span>현재 버전</span>
+        <strong>v0.3.16</strong>
       </div>
-</header>
+    </header>
 
-    <section class="upload-stack">
-      <section class="upload-panel" id="dropZone">
-        <div class="upload-copy">
-          <span class="upload-icon">📄</span>
-          <div>
-            <h2>1. NEIS 초과근무 최종자료</h2>
-            <p>나이스 급여 > 복무 > 초과근무관리 > 초과근무확인에서 엑셀 또는 CSV로 내려받기한 자료를 넣어주세요.</p>
+    <section class="privacy-banner" aria-label="개인정보 보호 안내">
+      <span class="privacy-icon" aria-hidden="true">🔒</span>
+      <div class="privacy-copy">
+        <strong>개인정보 보호</strong>
+        <p>업로드한 NEIS·카드 파일은 <b>서버로 전송하지 않고 현재 브라우저 안에서만 분석</b>합니다. 페이지를 새로 열면 필요한 파일을 다시 업로드하는 방식입니다.</p>
+      </div>
+      <button type="button" class="privacy-more" data-open-help>자세히 보기</button>
+    </section>
+
+    <section class="upload-stack" aria-label="파일 업로드">
+      <section class="upload-panel" id="dropZone" aria-labelledby="overtimeUploadTitle">
+        <div class="upload-panel-head">
+          <span class="upload-step" aria-hidden="true">1</span>
+          <span class="upload-icon" aria-hidden="true">📄</span>
+          <div class="upload-copy">
+            <div class="upload-titleline">
+              <h2 id="overtimeUploadTitle">NEIS 초과근무 최종자료</h2>
+            </div>
+            <p>나이스에서 내려받은 초과근무 최종자료</p>
+            <button type="button" class="upload-help-link" data-open-help>어디서 내려받나요?</button>
           </div>
         </div>
-        <label class="upload-button">
-          초과근무 파일 선택
-          <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" />
-        </label>
+        <div class="drop-action">
+          <strong class="drop-title">
+            <span class="drop-default">파일을 여기에 끌어다 놓으세요</span>
+            <span class="drop-active">여기에 놓아주세요</span>
+          </strong>
+          <span class="drop-or">또는</span>
+          <label class="upload-button">
+            파일 선택
+            <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.zip" />
+          </label>
+          <small class="upload-formats">Excel · CSV · ZIP</small>
+        </div>
+        <section class="status-card hidden" id="statusCard" aria-live="polite">
+          <span class="status-check" aria-hidden="true">✓</span>
+          <div>
+            <strong id="fileName">파일명</strong>
+            <p id="parseNote">자료를 읽었습니다.</p>
+          </div>
+          <button type="button" id="resetBtn">다른 파일로 변경</button>
+        </section>
       </section>
 
-      <section class="upload-panel card-upload" id="cardDropZone">
-        <div class="upload-copy">
-          <span class="upload-icon">💳</span>
-          <div>
-            <h2>2. BC카드 자료 <span class="optional-badge">선택</span></h2>
-            <p>승인내역 또는 이용내역 엑셀을 넣으면 날짜별 식비 후보를 함께 비교합니다. ZIP도 사용할 수 있습니다.</p>
+      <div class="step-connector" aria-hidden="true"><span>↓</span></div>
+
+      <section class="upload-panel card-upload" id="cardDropZone" aria-labelledby="cardUploadTitle">
+        <div class="upload-panel-head">
+          <span class="upload-step" aria-hidden="true">2</span>
+          <span class="upload-icon" aria-hidden="true">💳</span>
+          <div class="upload-copy">
+            <div class="upload-titleline">
+              <h2 id="cardUploadTitle">BC카드 승인내역 / 이용내역</h2>
+              <span class="optional-badge">선택</span>
+            </div>
+            <p>카드 자료를 추가하면 날짜별 식비 후보를 함께 비교합니다.</p>
+            <button type="button" class="upload-help-link" data-open-help>어디서 내려받나요?</button>
           </div>
         </div>
-        <label class="upload-button secondary">
-          카드자료 파일 선택
-          <input type="file" id="cardFileInput" accept=".xlsx,.xls,.zip,.pdf" />
-        </label>
+        <div class="drop-action">
+          <strong class="drop-title">
+            <span class="drop-default">파일을 여기에 끌어다 놓으세요</span>
+            <span class="drop-active">여기에 놓아주세요</span>
+          </strong>
+          <span class="drop-or">또는</span>
+          <label class="upload-button secondary">
+            파일 선택
+            <input type="file" id="cardFileInput" accept=".xlsx,.xls,.zip" />
+          </label>
+          <small class="upload-formats">Excel · ZIP</small>
+        </div>
+        <section class="status-card card-status hidden" id="cardStatusCard" aria-live="polite">
+          <span class="status-check" aria-hidden="true">✓</span>
+          <div>
+            <strong id="cardFileName">카드내역 파일명</strong>
+            <p id="cardParseNote">카드 이용내역을 읽었습니다.</p>
+          </div>
+          <button type="button" id="resetCardBtn">다른 파일로 변경</button>
+        </section>
       </section>
     </section>
 
-    <section class="settings-strip" aria-label="보조 설정">
-      <label class="mini-setting">
-        <span>1인 기준금액</span>
-        <input type="text" id="mealLimitInput" value="9,000" inputmode="numeric" aria-label="1인 기준금액" />
-        <em>원</em>
-      </label>
-      <label class="mask-toggle">
-        <input type="checkbox" id="maskNames" />
-        이름 가리기
-      </label>
-    </section>
-
-    <section class="status-card hidden" id="statusCard">
-      <div>
-        <strong id="fileName">파일명</strong>
-        <p id="parseNote">자료를 읽었습니다.</p>
+    <section class="settings-strip" aria-label="검사 설정">
+      <div class="settings-heading">
+        <span>검사 설정</span>
+        <p>파일을 준비한 뒤 필요한 기준만 조정하세요.</p>
       </div>
-      <button type="button" id="resetBtn">초기화</button>
-    </section>
-
-    <section class="status-card card-status hidden" id="cardStatusCard">
-      <div>
-        <strong id="cardFileName">카드내역 파일명</strong>
-        <p id="cardParseNote">카드 이용내역을 읽었습니다.</p>
+      <div class="settings-controls">
+        <label class="mini-setting">
+          <span>1인 기준금액</span>
+          <input type="text" id="mealLimitInput" value="9,000" inputmode="numeric" aria-label="1인 기준금액" />
+          <em>원</em>
+        </label>
+        <label class="mask-toggle">
+          <input type="checkbox" id="maskNames" />
+          이름 가리기
+        </label>
       </div>
-      <button type="button" id="resetCardBtn">카드내역 지우기</button>
     </section>
 
     <section class="summary-grid" id="summaryGrid" aria-label="요약"></section>
@@ -224,7 +260,7 @@
       </header>
 
       <div class="help-quickflow" aria-label="빠른 사용 순서">
-        <strong>파일 1개 넣고</strong><span>→</span><strong>달력에서 날짜 확인</strong><span>→</span><strong>필요하면 카드자료까지 비교</strong>
+        <strong>1. NEIS 자료 업로드</strong><span>→</span><strong>2. 카드자료 선택 업로드</strong><span>→</span><strong>달력에서 확인</strong>
       </div>
 
       <p class="help-intro">NEIS 초과근무 최종자료를 날짜별로 정리하고, 필요하면 BC카드 사용내역과 함께 특근매식비 검토를 도와주는 확인 보조 도구입니다.</p>
@@ -234,10 +270,10 @@
           <summary>사용방법</summary>
           <div class="help-detail-body">
             <ol>
-              <li><strong>NEIS 초과근무 자료</strong>를 업로드합니다. 나이스에서 내려받은 초과근무확인 엑셀 또는 CSV를 사용할 수 있습니다.</li>
+              <li><strong>NEIS 초과근무 자료</strong>를 업로드합니다. 파일을 업로드 영역에 끌어다 놓거나 <strong>파일 선택</strong> 버튼을 사용할 수 있습니다. 나이스의 <strong>급여 → 복무 → 초과근무관리 → 초과근무확인</strong>에서 내려받은 엑셀 또는 CSV를 사용할 수 있습니다.</li>
               <li><strong>월간 달력</strong>에서 날짜별 초근자 수와 실제 초과근무시간을 확인합니다.</li>
               <li>날짜를 누르면 오른쪽 상세영역에서 해당일 초근자와 실제 근무시간을 확인할 수 있습니다.</li>
-              <li>필요한 경우 <strong>BC카드 승인내역 또는 이용내역</strong>을 추가해 식비 후보금액을 함께 비교합니다.</li>
+              <li>필요한 경우 <strong>BC카드 승인내역 또는 이용내역</strong> 엑셀/ZIP을 같은 방식으로 추가해 식비 후보금액을 함께 비교합니다.</li>
             </ol>
             <p class="help-tip">카드 자료 없이 초과근무 자료만 업로드해도 사용할 수 있습니다.</p>
           </div>
@@ -289,6 +325,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="app.js?v=0.3.15"></script>
+  <script src="app.js?v=0.3.16"></script>
 </body>
 </html>

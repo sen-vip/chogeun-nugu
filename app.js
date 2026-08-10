@@ -1033,6 +1033,8 @@ async function handleFile(file) {
     applyFilters();
 
     fileName.textContent = file.name;
+    parseNote.textContent = `초과근무 자료 ${records.length}건을 읽었습니다.`;
+    dropZone.classList.add('has-file');
     statusCard.classList.remove('hidden');
     toolbar.classList.remove('hidden');
     contentGrid.classList.remove('hidden');
@@ -1062,6 +1064,7 @@ async function handleCardFile(file) {
     const total = records.reduce((sum, c) => sum + c.amount, 0);
     const mealTotal = mealCards.reduce((sum, c) => sum + c.amount, 0);
     cardFileName.textContent = file.name;
+    cardDropZone.classList.add('has-file');
     const layoutLabel = parseCardWorkbook.lastLayout === 'approval' ? '승인내역' : '이용내역';
     cardParseNote.textContent = `${layoutLabel} ${records.length}건, 식비 후보 ${mealCards.length}건, 후보금액 ${moneyFormat(mealTotal)}원, 카드합계 ${moneyFormat(total)}원을 읽었습니다.`;
     cardStatusCard.classList.remove('hidden');
@@ -1089,6 +1092,8 @@ function resetApp() {
   showAllCards.checked = false;
   statusCard.classList.add('hidden');
   cardStatusCard.classList.add('hidden');
+  dropZone.classList.remove('has-file');
+  cardDropZone.classList.remove('has-file');
   toolbar.classList.add('hidden');
   contentGrid.classList.add('hidden');
   tableView.classList.add('hidden');
@@ -1110,6 +1115,7 @@ function resetCard() {
   cardFileInput.value = '';
   showAllCards.checked = false;
   cardStatusCard.classList.add('hidden');
+  cardDropZone.classList.remove('has-file');
   renderAll();
   if (state.currentView === 'card') setView('calendar');
   showToast('카드내역을 지웠어요.');
@@ -1165,6 +1171,7 @@ mealLimitInput.addEventListener('input', () => syncMealLimitFromInput());
 mealLimitInput.addEventListener('blur', () => syncMealLimitFromInput({ format: true }));
 maskNames.addEventListener('change', () => { state.maskNames = maskNames.checked; renderAll(); });
 helpOpenBtn?.addEventListener('click', openHelpModal);
+$$('[data-open-help]').forEach(el => el.addEventListener('click', openHelpModal));
 helpCloseBtn?.addEventListener('click', closeHelpModal);
 helpModal?.querySelectorAll('[data-help-close]').forEach(el => el.addEventListener('click', closeHelpModal));
 document.addEventListener('keydown', handleHelpKeydown);
