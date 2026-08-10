@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>초근 누구 v0.3.16</title>
+  <title>초근 누구 v0.3.17</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="shortcut icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="stylesheet" href="style.css?v=0.3.16" />
@@ -17,7 +17,7 @@
       <div class="topbar-actions">
         <button type="button" class="topbar-help" id="helpOpenBtn" aria-haspopup="dialog" aria-controls="helpModal">도움말</button>
         <a href="https://github.com/sen-vip/chogeun-nugu" target="_blank" rel="noopener">GitHub</a>
-        <em>v0.3.16</em>
+        <em>v0.3.17</em>
       </div>
     </div>
   </nav>
@@ -31,7 +31,7 @@
       </div>
       <div class="hero-version" aria-label="현재 버전">
         <span>현재 버전</span>
-        <strong>v0.3.16</strong>
+        <strong>v0.3.17</strong>
       </div>
     </header>
 
@@ -53,8 +53,13 @@
             <div class="upload-titleline">
               <h2 id="overtimeUploadTitle">NEIS 초과근무 최종자료</h2>
             </div>
-            <p>나이스에서 내려받은 초과근무 최종자료</p>
-            <button type="button" class="upload-help-link" data-open-help>어디서 내려받나요?</button>
+            <p>엑셀·CSV 최종자료를 그대로 넣어주세요.</p>
+            <div class="download-route" aria-label="NEIS 초과근무 자료 다운로드 경로">
+              <span class="route-label">다운로드 경로</span>
+              <span class="route-path">
+                <b>급여</b><i>›</i><b>복무</b><i>›</i><b>초과근무관리</b><i>›</i><b>초과근무확인</b>
+              </span>
+            </div>
           </div>
         </div>
         <div class="drop-action">
@@ -90,8 +95,13 @@
               <h2 id="cardUploadTitle">BC카드 승인내역 / 이용내역</h2>
               <span class="optional-badge">선택</span>
             </div>
-            <p>카드 자료를 추가하면 날짜별 식비 후보를 함께 비교합니다.</p>
-            <button type="button" class="upload-help-link" data-open-help>어디서 내려받나요?</button>
+            <p>승인내역 또는 이용내역 중 하나만 넣어도 됩니다.</p>
+            <div class="download-route card-route" aria-label="BC카드 자료 다운로드 경로">
+              <span class="route-label">다운로드 경로</span>
+              <span class="route-path">
+                <b>BC카드 홈페이지</b><i>›</i><b>승인내역조회 또는 이용내역조회</b><i>›</i><b>해당 월 조회</b><i>›</i><b>엑셀 다운로드</b>
+              </span>
+            </div>
           </div>
         </div>
         <div class="drop-action">

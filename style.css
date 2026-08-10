@@ -3021,3 +3021,82 @@ body.modal-open {
     justify-content: center;
   }
 }
+
+
+/* v0.3.17 — 업로드 카드 안에 다운로드 경로를 바로 노출 */
+.download-route {
+  margin-top: 9px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: #526079;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.route-label {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 4px 8px;
+  border: 1px solid #dbe5f3;
+  border-radius: 999px;
+  background: #f1f6ff;
+  color: var(--navy);
+  font-size: 10.5px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.card-route .route-label {
+  border-color: #d8ebe2;
+  background: #eff9f4;
+  color: #27684f;
+}
+
+.route-path {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3px 5px;
+}
+
+.route-path b {
+  color: #45536a;
+  font-weight: 800;
+  letter-spacing: -.015em;
+  word-break: keep-all;
+}
+
+.card-route .route-path b {
+  color: #456354;
+}
+
+.route-path i {
+  color: #a8b2c1;
+  font-style: normal;
+  font-weight: 900;
+}
+
+@media (max-width: 620px) {
+  .download-route {
+    margin-top: 9px;
+    align-items: flex-start;
+    gap: 7px;
+    font-size: 11px;
+  }
+
+  .route-label {
+    min-height: 22px;
+    padding: 3px 7px;
+    font-size: 10px;
+  }
+
+  .route-path {
+    padding-top: 2px;
+    gap: 2px 4px;
+  }
+}
