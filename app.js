@@ -61,6 +61,7 @@ const state = {
   currentView: 'calendar',
   mealLimit: DEFAULT_MEAL_LIMIT,
   maskNames: false,
+  demoMode: false,
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -95,6 +96,9 @@ const cardTableBody = $('#cardTableBody');
 const toast = $('#toast');
 const mealLimitInput = $('#mealLimitInput');
 const maskNames = $('#maskNames');
+const demoBtn = $('#demoBtn');
+const demoBanner = $('#demoBanner');
+const exitDemoBtn = $('#exitDemoBtn');
 const helpModal = $('#helpModal');
 const helpOpenBtn = $('#helpOpenBtn');
 const helpCloseBtn = $('#helpCloseBtn');
@@ -576,6 +580,133 @@ function settleApprovalRecords(records) {
   }).filter(Boolean);
 }
 
+function makeDemoOvertimeRecord({ id, name, date, start, end, total, position = '교사', approvalStatus = '결재완료', dinnerDeduct = '' }) {
+  return {
+    id,
+    seq: id,
+    dept: '가상부서',
+    position,
+    name,
+    rawName: name,
+    date,
+    type: '평일',
+    personalStart: '',
+    personalEnd: '',
+    requestStart: start,
+    requestEnd: end,
+    requestTotal: total,
+    actualStart: start,
+    actualEnd: end,
+    afterClassDeduct: '',
+    actualTotal: total,
+    actualMinutes: minutesFromTime(total),
+    requestStatus: '신청완료',
+    approvalStatus,
+    holidayRequest: '',
+    flexibleRequest: '',
+    dinnerDeduct,
+    substituteHoliday: '',
+  };
+}
+
+function makeDemoCardRecord({ id, date, merchant, amount, postingDate = date, cardNo, approvalNo, meal = false, excluded = false, label, salesType = '일반', note = '' }) {
+  return {
+    id,
+    date,
+    postingDate,
+    merchant,
+    amount,
+    cardNo,
+    approvalNo,
+    salesType,
+    note,
+    requiredPeople: amount > 0 ? Math.ceil(amount / getMealLimit()) : 0,
+    isCancel: false,
+    isExcluded: excluded,
+    isMealCandidate: meal,
+    keywordHit: meal,
+    amountPattern: meal,
+    label: label || (excluded ? '제외 추정' : meal ? '식비 후보' : '일반'),
+  };
+}
+
+function getDemoData() {
+  const overtime = [
+    makeDemoOvertimeRecord({ id: 'D-001', name: '김가람', date: '2026-06-03', start: '18:10', end: '20:20', total: '02:10' }),
+    makeDemoOvertimeRecord({ id: 'D-002', name: '이누리', date: '2026-06-03', start: '18:05', end: '19:35', total: '01:30', position: '주무관' }),
+    makeDemoOvertimeRecord({ id: 'D-003', name: '박다온', date: '2026-06-10', start: '18:00', end: '20:30', total: '02:30' }),
+    makeDemoOvertimeRecord({ id: 'D-004', name: '최한결', date: '2026-06-17', start: '18:20', end: '21:10', total: '02:50' }),
+    makeDemoOvertimeRecord({ id: 'D-005', name: '정라온', date: '2026-06-17', start: '18:10', end: '20:00', total: '01:50', position: '주무관' }),
+    makeDemoOvertimeRecord({ id: 'D-006', name: '강온유', date: '2026-06-17', start: '18:05', end: '19:20', total: '01:15' }),
+    makeDemoOvertimeRecord({ id: 'D-007', name: '김가람', date: '2026-06-24', start: '18:00', end: '18:00', total: '00:00', approvalStatus: '결재완료' }),
+    makeDemoOvertimeRecord({ id: 'D-008', name: '윤새봄', date: '2026-06-29', start: '18:10', end: '21:30', total: '03:20', dinnerDeduct: 'O' }),
+  ];
+
+  const cards = [
+    makeDemoCardRecord({ id: 'C-001', date: '2026-06-03', merchant: '한그릇식당', amount: 18000, cardNo: '9490-****-****-1203', approvalNo: '26060301', meal: true }),
+    makeDemoCardRecord({ id: 'C-002', date: '2026-06-03', merchant: '가상문구센터', amount: 32000, cardNo: '9490-****-****-1203', approvalNo: '26060302' }),
+    makeDemoCardRecord({ id: 'C-003', date: '2026-06-10', merchant: '소담김밥', amount: 18000, cardNo: '9490-****-****-1203', approvalNo: '26061001', meal: true }),
+    makeDemoCardRecord({ id: 'C-004', date: '2026-06-17', merchant: '정담도시락', amount: 9000, cardNo: '9490-****-****-1203', approvalNo: '26061701', meal: true }),
+    makeDemoCardRecord({ id: 'C-005', date: '2026-06-17', merchant: '다온베이커리', amount: 8500, cardNo: '9490-****-****-1203', approvalNo: '26061702', meal: true }),
+    makeDemoCardRecord({ id: 'C-006', date: '2026-06-24', merchant: '온기분식', amount: 9000, cardNo: '9490-****-****-1203', approvalNo: '26062401', meal: true }),
+    makeDemoCardRecord({ id: 'C-007', date: '2026-06-29', merchant: '우리동네국밥', amount: 9000, cardNo: '9490-****-****-1203', approvalNo: '26062901', meal: true }),
+    makeDemoCardRecord({ id: 'C-008', date: '2026-06-29', merchant: '온라인교육몰', amount: 45000, cardNo: '9490-****-****-1203', approvalNo: '26062902', excluded: true }),
+  ];
+
+  return { overtime, cards };
+}
+
+function setDemoUi(active) {
+  state.demoMode = active;
+  demoBanner?.classList.toggle('hidden', !active);
+  demoBtn?.classList.toggle('active', active);
+  if (demoBtn) demoBtn.querySelector('span:nth-child(2)').textContent = active ? '체험 다시 보기' : '초근누구 체험하기';
+}
+
+function loadDemoData() {
+  state.mealLimit = DEFAULT_MEAL_LIMIT;
+  const { overtime, cards } = getDemoData();
+
+  state.records = overtime;
+  state.filtered = [];
+  state.cardRecords = cards;
+  state.currentYear = null;
+  state.currentMonth = null;
+  state.selectedDate = null;
+  state.maskNames = false;
+
+  mealLimitInput.value = moneyFormat(DEFAULT_MEAL_LIMIT);
+  maskNames.checked = false;
+  nameSearch.value = '';
+  showZero.checked = false;
+  showAllCards.checked = false;
+
+  setupInitialMonth();
+  renderApprovalOptions();
+  applyFilters();
+
+  fileName.textContent = '가상_NEIS_초과근무자료.xlsx';
+  parseNote.textContent = `가상 초과근무자료 ${overtime.length}건을 불러왔습니다.`;
+  cardFileName.textContent = '가상_BC카드_이용내역.xlsx';
+  const mealCards = cards.filter(card => card.isMealCandidate);
+  const mealTotal = mealCards.reduce((sum, card) => sum + card.amount, 0);
+  cardParseNote.textContent = `가상 이용내역 ${cards.length}건, 식비 후보 ${mealCards.length}건, 후보금액 ${moneyFormat(mealTotal)}원을 불러왔습니다.`;
+
+  dropZone.classList.add('has-file');
+  cardDropZone.classList.add('has-file');
+  statusCard.classList.remove('hidden');
+  cardStatusCard.classList.remove('hidden');
+  toolbar.classList.remove('hidden');
+  contentGrid.classList.remove('hidden');
+  setDemoUi(true);
+  setView('calendar');
+  showToast('가상자료로 체험 화면을 열었어요.');
+
+  requestAnimationFrame(() => {
+    demoBanner?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+}
+
 function setupInitialMonth() {
   const worked = state.records.filter(r => r.actualMinutes > 0);
   const base = worked[0] || state.records[0] || state.cardRecords[0];
@@ -1019,6 +1150,7 @@ async function readExcelLikeFile(file, purpose) {
 
 async function handleFile(file) {
   if (!file) return;
+  if (state.demoMode) resetApp();
   try {
     const workbook = await readExcelLikeFile(file, '초과근무');
     const records = parseWorkbook(workbook);
@@ -1048,6 +1180,7 @@ async function handleFile(file) {
 
 async function handleCardFile(file) {
   if (!file) return;
+  if (state.demoMode) resetApp();
   try {
     const workbook = await readExcelLikeFile(file, '카드내역');
     const records = parseCardWorkbook(workbook);
@@ -1084,6 +1217,7 @@ function resetApp() {
   state.currentYear = null;
   state.currentMonth = null;
   state.selectedDate = null;
+  setDemoUi(false);
   fileInput.value = '';
   cardFileInput.value = '';
   nameSearch.value = '';
@@ -1158,6 +1292,13 @@ function handleHelpKeydown(event) {
     closeHelpModal();
   }
 }
+
+demoBtn?.addEventListener('click', loadDemoData);
+exitDemoBtn?.addEventListener('click', () => {
+  resetApp();
+  showToast('체험을 종료했어요. 내 자료를 올려주세요.');
+  requestAnimationFrame(() => document.querySelector('.upload-stack')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+});
 
 fileInput.addEventListener('change', (event) => handleFile(event.target.files[0]));
 cardFileInput.addEventListener('change', (event) => handleCardFile(event.target.files[0]));
