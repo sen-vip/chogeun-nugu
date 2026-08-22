@@ -102,7 +102,13 @@ const exitDemoBtn = $('#exitDemoBtn');
 const helpModal = $('#helpModal');
 const helpOpenBtn = $('#helpOpenBtn');
 const helpCloseBtn = $('#helpCloseBtn');
+const dataResetRow = $('#dataResetRow');
+const clearUploadedDataBtn = $('#clearUploadedDataBtn');
+const resetModal = $('#resetModal');
+const resetCancelBtn = $('#resetCancelBtn');
+const resetConfirmBtn = $('#resetConfirmBtn');
 let helpReturnFocus = null;
+let resetReturnFocus = null;
 
 function showToast(message) {
   toast.textContent = message;
@@ -656,11 +662,18 @@ function getDemoData() {
   return { overtime, cards };
 }
 
+function syncDataResetAction() {
+  if (!dataResetRow) return;
+  const hasUploadedData = state.records.length > 0 || state.cardRecords.length > 0;
+  dataResetRow.classList.toggle('hidden', state.demoMode || !hasUploadedData);
+}
+
 function setDemoUi(active) {
   state.demoMode = active;
   demoBanner?.classList.toggle('hidden', !active);
   demoBtn?.classList.toggle('active', active);
   if (demoBtn) demoBtn.querySelector('span:nth-child(2)').textContent = active ? '체험 다시 보기' : '초근누구 체험하기';
+  syncDataResetAction();
 }
 
 function loadDemoData() {
@@ -1171,6 +1184,7 @@ async function handleFile(file) {
     toolbar.classList.remove('hidden');
     contentGrid.classList.remove('hidden');
     setView('calendar');
+    syncDataResetAction();
     showToast(file.name.toLowerCase().endsWith('.csv') ? 'CSV 초과근무자료를 불러왔어요.' : '초과근무자료를 불러왔어요.');
   } catch (error) {
     console.error(error);
@@ -1203,6 +1217,7 @@ async function handleCardFile(file) {
     cardStatusCard.classList.remove('hidden');
     toolbar.classList.remove('hidden');
     contentGrid.classList.remove('hidden');
+    syncDataResetAction();
     showToast('카드 이용내역을 불러왔어요.');
   } catch (error) {
     console.error(error);
@@ -1242,6 +1257,7 @@ function resetApp() {
       <p>캘린더에서 날짜를 누르면 해당일 초과근무자와 카드 식비 후보가 표시됩니다.</p>
     </div>
   `;
+  syncDataResetAction();
 }
 
 function resetCard() {
@@ -1252,6 +1268,7 @@ function resetCard() {
   cardDropZone.classList.remove('has-file');
   renderAll();
   if (state.currentView === 'card') setView('calendar');
+  syncDataResetAction();
   showToast('카드내역을 지웠어요.');
 }
 
@@ -1268,6 +1285,31 @@ function bindDrop(zone, handler) {
   });
 }
 
+
+function openResetModal() {
+  if (!resetModal || state.demoMode) return;
+  if (!state.records.length && !state.cardRecords.length) {
+    showToast('초기화할 업로드 자료가 없어요.');
+    return;
+  }
+  resetReturnFocus = document.activeElement;
+  resetModal.classList.remove('hidden');
+  document.body.classList.add('modal-open');
+  requestAnimationFrame(() => resetModal.querySelector('.reset-modal-panel')?.focus());
+}
+
+function closeResetModal() {
+  if (!resetModal || resetModal.classList.contains('hidden')) return;
+  resetModal.classList.add('hidden');
+  document.body.classList.remove('modal-open');
+  if (resetReturnFocus && typeof resetReturnFocus.focus === 'function') resetReturnFocus.focus();
+}
+
+function confirmUploadedDataReset() {
+  closeResetModal();
+  resetApp();
+  showToast('업로드 자료를 초기화했어요. 검사 설정은 유지했어요.');
+}
 
 function openHelpModal() {
   if (!helpModal) return;
@@ -1288,10 +1330,18 @@ function closeHelpModal() {
 }
 
 function handleHelpKeydown(event) {
-  if (event.key === 'Escape' && helpModal && !helpModal.classList.contains('hidden')) {
-    closeHelpModal();
+  if (event.key !== 'Escape') return;
+  if (resetModal && !resetModal.classList.contains('hidden')) {
+    closeResetModal();
+    return;
   }
+  if (helpModal && !helpModal.classList.contains('hidden')) closeHelpModal();
 }
+
+clearUploadedDataBtn?.addEventListener('click', openResetModal);
+resetCancelBtn?.addEventListener('click', closeResetModal);
+resetConfirmBtn?.addEventListener('click', confirmUploadedDataReset);
+resetModal?.querySelectorAll('[data-reset-close]').forEach(el => el.addEventListener('click', closeResetModal));
 
 demoBtn?.addEventListener('click', loadDemoData);
 exitDemoBtn?.addEventListener('click', () => {
