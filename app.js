@@ -1180,7 +1180,7 @@ async function readExcelLikeFile(file, purpose) {
   }
 
   if (lower.endsWith('.xls')) {
-    throw new Error('보안 강화 버전에서는 구형 .xls 형식을 직접 읽지 않습니다. 엑셀에서 .xlsx로 다시 저장한 뒤 업로드해주세요.');
+    throw new Error('이 파일은 구형 Excel 형식(.xls)입니다. Excel에서 .xlsx 형식으로 다시 저장한 뒤 올려주세요.');
   }
 
   const buffer = await file.arrayBuffer();
