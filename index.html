@@ -3,10 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>초근 누구 v0.3.20</title>
+  <meta name="referrer" content="no-referrer" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'none';" />
+  <title>초근 누구 v0.3.21</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="shortcut icon" type="image/svg+xml" href="favicon.svg" />
-  <link rel="stylesheet" href="style.css?v=0.3.20" />
+  <link rel="stylesheet" href="style.css?v=0.3.21" />
 </head>
 <body>
   <nav class="topbar" aria-label="초근 누구 상단바">
@@ -16,8 +18,8 @@
       </div>
       <div class="topbar-actions">
         <button type="button" class="topbar-help" id="helpOpenBtn" aria-haspopup="dialog" aria-controls="helpModal">도움말</button>
-        <a href="https://github.com/sen-vip/chogeun-nugu" target="_blank" rel="noopener">GitHub</a>
-        <em>v0.3.20</em>
+        <a href="https://github.com/sen-vip/chogeun-nugu" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <em>v0.3.21</em>
       </div>
     </div>
   </nav>
@@ -39,7 +41,7 @@
       </div>
       <div class="hero-version" aria-label="현재 버전">
         <span>현재 버전</span>
-        <strong>v0.3.20</strong>
+        <strong>v0.3.21</strong>
       </div>
     </header>
 
@@ -47,7 +49,7 @@
       <span class="privacy-icon" aria-hidden="true">🔒</span>
       <div class="privacy-copy">
         <strong>개인정보 보호</strong>
-        <p>업로드한 NEIS·카드 파일은 <b>서버로 전송하지 않고 현재 브라우저 안에서만 분석</b>합니다. 페이지를 새로 열면 필요한 파일을 다시 업로드하는 방식입니다.</p>
+        <p>선택한 NEIS·카드 파일은 <b>외부 서버로 전송하지 않고 이 브라우저 안에서만 분석</b>합니다. 분석용 코드도 이 사이트 내부 파일만 사용하며, 새로고침·자료 초기화 시 분석자료는 사라집니다.</p>
       </div>
       <button type="button" class="privacy-more" data-open-help>자세히 보기</button>
     </section>
@@ -61,7 +63,7 @@
             <div class="upload-titleline">
               <h2 id="overtimeUploadTitle">NEIS 초과근무 최종자료</h2>
             </div>
-            <p>엑셀·CSV 최종자료를 그대로 넣어주세요.</p>
+            <p>XLSX·CSV 최종자료를 그대로 넣어주세요.</p>
             <div class="download-route" aria-label="NEIS 초과근무 자료 다운로드 경로">
               <span class="route-label">다운로드 경로</span>
               <span class="route-path">
@@ -78,9 +80,9 @@
           <span class="drop-or">또는</span>
           <label class="upload-button">
             파일 선택
-            <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.zip" />
+            <input type="file" id="fileInput" accept=".xlsx,.csv,.zip" />
           </label>
-          <small class="upload-formats">Excel · CSV · ZIP</small>
+          <small class="upload-formats">XLSX · CSV · ZIP</small>
         </div>
         <section class="status-card hidden" id="statusCard" aria-live="polite">
           <span class="status-check" aria-hidden="true">✓</span>
@@ -120,9 +122,9 @@
           <span class="drop-or">또는</span>
           <label class="upload-button secondary">
             파일 선택
-            <input type="file" id="cardFileInput" accept=".xlsx,.xls,.zip" />
+            <input type="file" id="cardFileInput" accept=".xlsx,.zip" />
           </label>
-          <small class="upload-formats">Excel · ZIP</small>
+          <small class="upload-formats">XLSX · ZIP</small>
         </div>
         <section class="status-card card-status hidden" id="cardStatusCard" aria-live="polite">
           <span class="status-check" aria-hidden="true">✓</span>
@@ -305,10 +307,10 @@
           <summary>사용방법</summary>
           <div class="help-detail-body">
             <ol>
-              <li><strong>NEIS 초과근무 자료</strong>를 업로드합니다. 파일을 업로드 영역에 끌어다 놓거나 <strong>파일 선택</strong> 버튼을 사용할 수 있습니다. 나이스의 <strong>급여 → 복무 → 초과근무관리 → 초과근무확인</strong>에서 내려받은 엑셀 또는 CSV를 사용할 수 있습니다.</li>
+              <li><strong>NEIS 초과근무 자료</strong>를 업로드합니다. 파일을 업로드 영역에 끌어다 놓거나 <strong>파일 선택</strong> 버튼을 사용할 수 있습니다. 나이스의 <strong>급여 → 복무 → 초과근무관리 → 초과근무확인</strong>에서 내려받은 XLSX 또는 CSV를 사용할 수 있습니다.</li>
               <li><strong>월간 달력</strong>에서 날짜별 초근자 수와 실제 초과근무시간을 확인합니다.</li>
               <li>날짜를 누르면 오른쪽 상세영역에서 해당일 초근자와 실제 근무시간을 확인할 수 있습니다.</li>
-              <li>필요한 경우 <strong>BC카드 승인내역 또는 이용내역</strong> 엑셀/ZIP을 같은 방식으로 추가해 식비 후보금액을 함께 비교합니다.</li>
+              <li>필요한 경우 <strong>BC카드 승인내역 또는 이용내역</strong> XLSX/ZIP을 같은 방식으로 추가해 식비 후보금액을 함께 비교합니다.</li>
             </ol>
             <p class="help-tip">카드 자료 없이 초과근무 자료만 업로드해도 사용할 수 있습니다.</p>
           </div>
@@ -347,8 +349,11 @@
         <details>
           <summary>개인정보</summary>
           <div class="help-detail-body">
-            <p><strong>업로드한 파일은 서버로 전송되지 않고 현재 브라우저 안에서만 분석됩니다.</strong></p>
-            <p>페이지를 새로 열어 사용할 때 다시 필요한 파일을 업로드하는 방식입니다. 실제 업무자료를 다루는 만큼 공용 PC에서는 사용 후 화면과 다운로드 파일을 확인하고 브라우저를 닫아주세요.</p>
+            <p><strong>업로드한 파일은 외부 서버로 전송되지 않고 현재 브라우저 안에서만 분석됩니다.</strong></p>
+            <p>분석용 JavaScript도 외부 CDN에서 실행하지 않고 사이트 내부 파일만 사용합니다. 앱의 네트워크 연결은 CSP의 <strong>connect-src 'none'</strong> 정책으로 제한합니다.</p>
+            <p>NEIS·카드 분석자료를 localStorage·sessionStorage·IndexedDB 등에 저장하지 않으며, 페이지 새로고침 또는 <strong>업로드 자료 초기화</strong> 시 분석자료는 사라집니다.</p>
+            <p>카드번호는 화면과 복사 결과에서 일부를 가려 표시합니다. 복사 기능을 사용하면 복사한 내용이 기기의 클립보드에 일시적으로 남을 수 있으므로 공용 PC에서는 사용 후 다른 내용을 복사하거나 클립보드를 정리해 주세요.</p>
+            <p class="help-tip">보안 강화 버전에서는 구형 <strong>.xls</strong> 파일을 직접 읽지 않습니다. 필요한 경우 엑셀에서 <strong>.xlsx</strong>로 다시 저장해 사용해 주세요.</p>
             <p class="help-tip">초근 누구는 자료를 보기 쉽게 정리하는 확인 보조 도구입니다. 최종 인정 여부는 기관 기준과 증빙자료를 함께 확인해 주세요.</p>
           </div>
         </details>
@@ -371,8 +376,8 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-  <script src="app.js?v=0.3.20"></script>
+  <script src="vendor/jszip.min.js"></script>
+  <script src="vendor/xlsx-lite.js?v=0.3.21"></script>
+  <script src="app.js?v=0.3.21"></script>
 </body>
 </html>

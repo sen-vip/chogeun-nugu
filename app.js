@@ -36,6 +36,10 @@ const SAFE_LEGACY_COL = {
 };
 
 const DEFAULT_MEAL_LIMIT = 9000;
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
+const MAX_ZIP_ENTRIES = 100;
+const MAX_EXTRACTED_FILE_SIZE = 50 * 1024 * 1024;
+
 
 const EXCLUDE_KEYWORDS = [
   'g마켓', '지마켓', '11번가', '예스이십사', '예스24', 'yes24', 'kcp', 'nice_', 'nice',
@@ -214,6 +218,18 @@ function maskName(name, context = 'detail') {
   return `${clean[0]}○${clean[clean.length - 1]}`;
 }
 
+function maskCardNumber(value) {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  if (text.includes('*')) return text;
+
+  const digits = text.replace(/\D/g, '');
+  if (!digits) return '-';
+  if (digits.length <= 4) return `****${digits}`;
+  if (digits.length < 8) return `${digits.slice(0, 2)}****${digits.slice(-2)}`;
+  return `${digits.slice(0, 4)}-****-****-${digits.slice(-4)}`;
+}
+
 function refreshCardCalculations() {
   const limit = getMealLimit();
   state.cardRecords.forEach(card => {
@@ -247,9 +263,7 @@ function normalizeHeader(value) {
 
 function rowsFromWorkbook(workbook) {
   if (workbook?.__rows) return workbook.__rows;
-  const firstSheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[firstSheetName];
-  return XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
+  throw new Error('워크시트 데이터를 읽지 못했습니다.');
 }
 
 function isApprovalStatusHeader(header) {
@@ -467,9 +481,7 @@ function getCardWorkbookLayout(headers) {
 }
 
 function parseCardWorkbook(workbook) {
-  const firstSheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[firstSheetName];
-  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
+  const rows = rowsFromWorkbook(workbook);
   const headerIndex = rows.findIndex(row => {
     const headers = row.map(normalizeHeader);
     return Boolean(getCardWorkbookLayout(headers));
@@ -1045,7 +1057,7 @@ function renderCardTable() {
           <td>${moneyFormat(card.amount)}원</td>
           <td>${escapeHtml(card.label)}${card.isMealCandidate ? ` · ${escapeHtml(status.label)}` : ''}</td>
           <td>${card.requiredPeople || '-'}</td>
-          <td>${escapeHtml(card.cardNo || '-')}</td>
+          <td>${escapeHtml(maskCardNumber(card.cardNo) || '-')}</td>
           <td>${escapeHtml(card.approvalNo || '-')}</td>
         </tr>
       `;
@@ -1100,7 +1112,7 @@ function copyCardText() {
   const lines = state.cardRecords
     .slice()
     .sort((a, b) => a.date.localeCompare(b.date))
-    .map(c => `${dateLabel(c.date)}\t${c.postingDate || '-'}\t${c.merchant}\t${c.amount}\t${c.label}\t${c.requiredPeople || '-'}\t${c.cardNo || '-'}\t${c.approvalNo || '-'}`);
+    .map(c => `${dateLabel(c.date)}\t${c.postingDate || '-'}\t${c.merchant}\t${c.amount}\t${c.label}\t${c.requiredPeople || '-'}\t${maskCardNumber(c.cardNo) || '-'}\t${c.approvalNo || '-'}`);
   if (!lines.length) return showToast('복사할 카드내역이 없어요.');
   navigator.clipboard.writeText(['승인일자\t접수일자\t가맹점\t금액\t분류\t기준인원\t카드번호\t승인번호', ...lines].join('\n'))
     .then(() => showToast('카드표 내용을 복사했어요.'));
@@ -1123,42 +1135,94 @@ function escapeHtml(value) {
     .replaceAll("'", '&#039;');
 }
 
-async function readExcelLikeFile(file, purpose) {
-  if (!window.XLSX) {
-    throw new Error('엑셀 읽기 라이브러리를 불러오지 못했습니다.');
-  }
+function fileSizeLabel(bytes) {
+  if (bytes < 1024 * 1024) return `${Math.ceil(bytes / 1024)}KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
+}
 
-  const lower = file.name.toLowerCase();
-  const buffer = await file.arrayBuffer();
+function assertSafeUpload(file) {
+  if (!file) throw new Error('파일을 선택해주세요.');
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error(`파일 용량이 너무 큽니다. 안전한 처리를 위해 20MB 이하의 파일만 사용할 수 있습니다. (현재 ${fileSizeLabel(file.size)})`);
+  }
+  if (String(file.name || '').length > 255) {
+    throw new Error('파일명이 너무 깁니다. 파일명을 짧게 바꾼 뒤 다시 시도해주세요.');
+  }
+}
+
+function zipEntryUncompressedSize(entry) {
+  const size = Number(entry?._data?.uncompressedSize);
+  return Number.isFinite(size) && size >= 0 ? size : null;
+}
+
+function isSafeArchiveCandidate(entry, pattern) {
+  if (!entry || entry.dir || !pattern.test(entry.name)) return false;
+  const name = String(entry.name || '');
+  if (name.startsWith('__MACOSX/') || /(^|\/)\._/.test(name)) return false;
+  return true;
+}
+
+async function workbookFromXlsxBuffer(buffer) {
+  if (!window.XLSX_LITE) {
+    throw new Error('로컬 XLSX 읽기 모듈을 불러오지 못했습니다.');
+  }
+  const rows = await window.XLSX_LITE.readRows(buffer);
+  return { __rows: rows, __kind: 'xlsx' };
+}
+
+async function readExcelLikeFile(file, purpose) {
+  assertSafeUpload(file);
+  const lower = String(file.name || '').toLowerCase();
   const allowCsv = purpose === '초과근무';
 
   if (lower.endsWith('.pdf')) {
-    throw new Error('PDF는 표 구조상 파싱이 불안정합니다. 엑셀, CSV 또는 ZIP 파일을 사용해주세요.');
+    throw new Error('PDF는 표 구조상 파싱이 불안정합니다. XLSX, CSV 또는 ZIP 파일을 사용해주세요.');
   }
 
+  if (lower.endsWith('.xls')) {
+    throw new Error('보안 강화 버전에서는 구형 .xls 형식을 직접 읽지 않습니다. 엑셀에서 .xlsx로 다시 저장한 뒤 업로드해주세요.');
+  }
+
+  const buffer = await file.arrayBuffer();
+
   if (lower.endsWith('.csv')) {
-    if (!allowCsv) throw new Error(`${purpose} 파일은 엑셀 또는 ZIP만 지원합니다.`);
+    if (!allowCsv) throw new Error(`${purpose} 파일은 XLSX 또는 ZIP만 지원합니다.`);
     return workbookFromCsvBuffer(buffer);
   }
 
   if (lower.endsWith('.zip')) {
-    if (!window.JSZip) throw new Error('ZIP 읽기 라이브러리를 불러오지 못했습니다.');
-    const zip = await JSZip.loadAsync(buffer);
-    const pattern = allowCsv ? /\.(xlsx|xls|csv)$/i : /\.(xlsx|xls)$/i;
-    const target = Object.values(zip.files).find(entry => !entry.dir && pattern.test(entry.name));
-    if (!target) {
-      throw new Error(allowCsv ? 'ZIP 안에서 엑셀 또는 CSV 파일을 찾지 못했습니다.' : 'ZIP 안에서 엑셀 파일을 찾지 못했습니다.');
+    if (!window.JSZip) throw new Error('로컬 ZIP 읽기 라이브러리를 불러오지 못했습니다.');
+    const zip = await window.JSZip.loadAsync(buffer);
+    const entries = Object.values(zip.files);
+    if (entries.length > MAX_ZIP_ENTRIES) {
+      throw new Error(`ZIP 내부 파일이 너무 많습니다. 안전한 처리를 위해 ${MAX_ZIP_ENTRIES}개 이하만 사용할 수 있습니다.`);
     }
+
+    const pattern = allowCsv ? /\.(xlsx|csv)$/i : /\.xlsx$/i;
+    const candidates = entries.filter(entry => isSafeArchiveCandidate(entry, pattern));
+    if (!candidates.length) {
+      throw new Error(allowCsv ? 'ZIP 안에서 XLSX 또는 CSV 파일을 찾지 못했습니다.' : 'ZIP 안에서 XLSX 파일을 찾지 못했습니다.');
+    }
+
+    const target = candidates[0];
+    const uncompressedSize = zipEntryUncompressedSize(target);
+    if (uncompressedSize !== null && uncompressedSize > MAX_EXTRACTED_FILE_SIZE) {
+      throw new Error('ZIP 안의 업무자료가 압축 해제 후 너무 큽니다.');
+    }
+
     const targetBuffer = await target.async('arraybuffer');
+    if (targetBuffer.byteLength > MAX_EXTRACTED_FILE_SIZE) {
+      throw new Error('ZIP 안의 업무자료가 압축 해제 후 너무 큽니다.');
+    }
     if (/\.csv$/i.test(target.name)) return workbookFromCsvBuffer(targetBuffer);
-    return XLSX.read(targetBuffer, { type: 'array', cellDates: true });
+    return workbookFromXlsxBuffer(targetBuffer);
   }
 
-  if (!/\.(xlsx|xls)$/i.test(lower)) {
-    throw new Error(allowCsv ? `${purpose} 파일은 엑셀, CSV 또는 ZIP만 지원합니다.` : `${purpose} 파일은 엑셀 또는 ZIP만 지원합니다.`);
+  if (!lower.endsWith('.xlsx')) {
+    throw new Error(allowCsv ? `${purpose} 파일은 XLSX, CSV 또는 ZIP만 지원합니다.` : `${purpose} 파일은 XLSX 또는 ZIP만 지원합니다.`);
   }
 
-  return XLSX.read(buffer, { type: 'array', cellDates: true });
+  return workbookFromXlsxBuffer(buffer);
 }
 
 async function handleFile(file) {
@@ -1187,7 +1251,6 @@ async function handleFile(file) {
     syncDataResetAction();
     showToast(file.name.toLowerCase().endsWith('.csv') ? 'CSV 초과근무자료를 불러왔어요.' : '초과근무자료를 불러왔어요.');
   } catch (error) {
-    console.error(error);
     showToast(error.message || '파일을 읽는 중 오류가 발생했어요.');
   }
 }
@@ -1220,7 +1283,6 @@ async function handleCardFile(file) {
     syncDataResetAction();
     showToast('카드 이용내역을 불러왔어요.');
   } catch (error) {
-    console.error(error);
     showToast(error.message || '카드내역을 읽는 중 오류가 발생했어요.');
   }
 }
