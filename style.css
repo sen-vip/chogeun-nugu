@@ -3243,4 +3243,164 @@ body.modal-open {
     width: 100%;
   }
 }
-\n\n/* v0.3.19 — 업로드 자료 초기화 */\n.data-reset-row {\n  margin: 10px 2px 0;\n  display: flex;\n  justify-content: flex-end;\n}\n\n.data-reset-button {\n  min-height: 36px;\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  padding: 7px 10px;\n  border: 1px solid #d9e0e9;\n  border-radius: 11px;\n  background: #fff;\n  color: #6b7585;\n  font-size: 12px;\n  font-weight: 800;\n}\n\n.data-reset-button:hover {\n  border-color: #c6cfdb;\n  background: #f7f9fc;\n  color: #495568;\n}\n\n.reset-modal {\n  position: fixed;\n  inset: 0;\n  z-index: 1300;\n  display: grid;\n  place-items: center;\n  padding: 20px;\n}\n\n.reset-modal-backdrop {\n  position: absolute;\n  inset: 0;\n  background: rgba(22, 31, 48, .38);\n  backdrop-filter: blur(2px);\n}\n\n.reset-modal-panel {\n  position: relative;\n  width: min(100%, 390px);\n  padding: 24px;\n  border: 1px solid #e0e5ed;\n  border-radius: 20px;\n  background: #fff;\n  box-shadow: 0 22px 60px rgba(22, 31, 48, .18);\n  text-align: center;\n  outline: none;\n}\n\n.reset-modal-icon {\n  width: 42px;\n  height: 42px;\n  margin: 0 auto 12px;\n  display: grid;\n  place-items: center;\n  border-radius: 999px;\n  background: #f1f4f8;\n  color: #526079;\n  font-size: 20px;\n  font-weight: 900;\n}\n\n.reset-modal-panel h2 {\n  margin: 0;\n  color: var(--navy);\n  font-size: 19px;\n  letter-spacing: -.02em;\n}\n\n.reset-modal-panel p {\n  margin: 10px 0 0;\n  color: var(--muted);\n  font-size: 13px;\n  line-height: 1.6;\n}\n\n.reset-modal-panel p strong {\n  color: #4e5b70;\n}\n\n.reset-modal-actions {\n  margin-top: 20px;\n  display: grid;\n  grid-template-columns: 1fr 1fr;\n  gap: 9px;\n}\n\n.reset-modal-actions button {\n  min-height: 42px;\n  border-radius: 12px;\n  font-weight: 900;\n}\n\n.reset-cancel {\n  border: 1px solid #d8dfe9;\n  background: #fff;\n  color: #5e697a;\n}\n\n.reset-confirm {\n  border: 1px solid #d7a7a7;\n  background: #fff7f7;\n  color: #a44343;\n}\n\n.reset-confirm:hover {\n  background: #fff0f0;\n  border-color: #ca9090;\n}\n\n@media (max-width: 620px) {\n  .data-reset-row {\n    margin-top: 8px;\n  }\n\n  .data-reset-button {\n    width: 100%;\n    justify-content: center;\n  }\n\n  .reset-modal-panel {\n    padding: 21px 18px;\n  }\n}\n
+
+/* v0.3.20 — 업로드 자료 초기화 */
+.data-reset-row {
+  margin: 10px 4px 2px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.data-reset-button {
+  appearance: none;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: #778296;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+
+.data-reset-button span {
+  width: 23px;
+  height: 23px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #eef2f7;
+  color: #53617a;
+  font-size: 14px;
+  line-height: 1;
+  transition: background .15s ease, transform .15s ease;
+}
+
+.data-reset-button:hover {
+  border-color: #e1e6ee;
+  background: #f7f9fc;
+  color: #4f5d73;
+}
+
+.data-reset-button:hover span {
+  background: #e7edf5;
+  transform: rotate(-18deg);
+}
+
+.data-reset-button:focus-visible {
+  outline: 3px solid rgba(52, 84, 143, .16);
+  outline-offset: 2px;
+}
+
+.reset-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.reset-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(22, 31, 48, .38);
+  backdrop-filter: blur(2px);
+}
+
+.reset-modal-panel {
+  position: relative;
+  width: min(100%, 390px);
+  padding: 24px;
+  border: 1px solid #e0e5ed;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 22px 60px rgba(22, 31, 48, .18);
+  text-align: center;
+  outline: none;
+}
+
+.reset-modal-icon {
+  width: 42px;
+  height: 42px;
+  margin: 0 auto 12px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #f1f4f8;
+  color: #526079;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.reset-modal-panel h2 {
+  margin: 0;
+  color: var(--navy);
+  font-size: 19px;
+  letter-spacing: -.02em;
+}
+
+.reset-modal-panel p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.reset-modal-panel p strong {
+  color: #4e5b70;
+}
+
+.reset-modal-actions {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+
+.reset-modal-actions button {
+  appearance: none;
+  min-height: 42px;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.reset-cancel {
+  border: 1px solid #d8dfe9;
+  background: #fff;
+  color: #5e697a;
+}
+
+.reset-cancel:hover {
+  background: #f7f9fc;
+}
+
+.reset-confirm {
+  border: 1px solid #e3b9b9;
+  background: #fff7f7;
+  color: #a44343;
+}
+
+.reset-confirm:hover {
+  background: #fff0f0;
+  border-color: #ca9090;
+}
+
+@media (max-width: 620px) {
+  .data-reset-row {
+    margin-top: 8px;
+  }
+
+  .reset-modal-panel {
+    padding: 21px 18px;
+  }
+}
